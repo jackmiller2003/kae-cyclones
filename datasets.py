@@ -82,37 +82,125 @@ class CycloneToCycloneDataset(Dataset):
                     j += 1
                     i += 1
 
+class CycloneDataset(Dataset):
+    """
+    Custom dataset for cyclones.
+    """
+
+    def __init__(self, cyclone_dir, tracks_path, save_np = False, load_np = True, crop = True, prediction_length = 0,
+                atmospheric_values = ['u'], pressure_levels=[2], partition_name='train'):
+        self.cyclone_dir = cyclone_dir
+        self.atmospheric_values = atmospheric_values
+        self.pressure_levels = pressure_levels
+        self.tracks_path = tracks_path
+        self.load_np = load_np
+        self.save_np = save_np
+        self.crop = crop
+        self.prediction_length = prediction_length
+        self.partition_name = partition_name
+
+        with open(tracks_path, 'r') as jp:
+            self.tracks_dict = json.load(jp)
+
+    def __len__(self):
+        length = 0
+        for cyclone, data in self.tracks_dict.items():
+            if len(data['coordinates']) > 1:
+                length += len(data['coordinates'][:-1])
+            return length       
+    
+    def __getitem__(self, idx):
+        i = 0
+
+        for cyclone, data in self.tracks_dict.items():
+            j = 0
+
+            if len(data['coordinates']) > 1:
+                for coordinate in data['coordinates'][:-1]:
+                    if i == idx:
+                        if self.save_np:
+                            cyclone_ds = xarray.open_dataset(self.cyclone_dir+cyclone+".nc", 
+                            engine='netcdf4', decode_cf=True, cache=True)
+
+                            cyclone_ds = cyclone_ds[dict(time=[j],
+                                                    level=self.pressure_levels)][self.atmospheric_values]
+
+                            cyclone_array = cyclone_ds.to_array().to_numpy()
+
+                            if self.crop:
+                                cyclone_array = cyclone_array[:,:,:,40:120,40:120]
+                                cyclone_array = cyclone_array[:,:,:,::4,::4]
+                                size = 20
+
+                            cyclone_array = cyclone_array.transpose((1,0,2,3,4))
+                            cyclone_array = cyclone_array.reshape(1, -1, size, size) 
+
+                            return cyclone_array, cyclone, j
+
+                        if self.load_np:
+                            cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones_crop/{self.prediction_length}/{self.atmospheric_values[0]}/{self.pressure_levels[0]}/{self.partition_name}/{cyclone}-{j}.npy')
+
+                            label = torch.from_numpy(np.array([
+                                                        [float(data['coordinates'][j][0]), float(data['coordinates'][j+1][0])], 
+                                                        [float(data['coordinates'][j][1]), float(data['coordinates'][j+1][1])]
+                                                                ]))
+
+                            return torch.from_numpy(cyclone_array), label
+
+                    i += 1
+                    j += 1
+
 def generate_example_dataset():
+    """
+    cyclone_dir, json_path, prediction_length, atmospheric_values, pressure_levels,
+                load_np=True, save_np=False, partition_name='train', crop=True
+    """
+
     train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 4,
-                                        ['u'], [0], load_np=True, save_np=False, partition_name='train')
-    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 2,
-                                        ['u'], [0], load_np=True, save_np=False, partition_name='valid')
-    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 2,
-                                        ['u'], [0], load_np=True, save_np=False, partition_name='test')
+                                        ['u'], [2], load_np=True, save_np=False, partition_name='train')
+    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 4,
+                                        ['u'], [2], load_np=True, save_np=False, partition_name='valid')
+    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 4,
+                                        ['u'], [2], load_np=True, save_np=False, partition_name='test')
 
     return train_ds, val_ds, test_ds
 
-def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_levels):
-    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, prediction_length,
-                                        atmospheric_values, pressure_levels, load_np=False, save_np=True, partition_name='train')
-    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, prediction_length,
-                                        atmospheric_values, pressure_levels, load_np=False, save_np=True, partition_name='valid')
-    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, prediction_length,
-                                        atmospheric_values, pressure_levels, load_np=False, save_np=True, partition_name='test')
+def generate_prediction_dataset():
+    train_ds = CycloneDataset('/g/data/x77/ob2720/partition/train/', tracks_path=train_json_path, 
+                                        save_np=False, load_np=True)
+    val_ds = CycloneDataset('/g/data/x77/ob2720/partition/valid/', tracks_path=valid_json_path, 
+                                        save_np=False, load_np=True, partition_name='valid')
+    test_ds = CycloneDataset('/g/data/x77/ob2720/partition/test/', tracks_path=test_json_path,
+                                         save_np=False, load_np=True, partition_name='test')
+    
+    return train_ds, val_ds, test_ds
 
-    # print("Train ds")
-    # for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
-    #     np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/train/{cyclone}-{j}.npy', cyclone_array)
+def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_levels):
+    """
+    cyclone_dir, tracks_dict, save_np = False, load_np = True, crop = True, prediction_length = 0,
+                atmospheric_values = ['u'], pressure_levels=[2], partition_name='train'
+    """
+
+    train_ds = CycloneDataset('/g/data/x77/ob2720/partition/train/', tracks_path=train_json_path, 
+                                        save_np=True, load_np=False)
+    val_ds = CycloneDataset('/g/data/x77/ob2720/partition/valid/', tracks_path=valid_json_path, 
+                                        save_np=True, load_np=False, partition_name='valid')
+    test_ds = CycloneDataset('/g/data/x77/ob2720/partition/test/', tracks_path=test_json_path,
+                                         save_np=True, load_np=False, partition_name='test')
+    print(len(train_ds))
+    print("Train ds")
+    for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
+        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/train/{cyclone}-{j}.npy', cyclone_array)
     
     print(len(val_ds))
     print("Val ds")
     for i,(cyclone_array, cyclone, j) in tqdm(enumerate(val_ds)):
-        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/valid/{cyclone}-{j}.npy', cyclone_array)
+        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/valid/{cyclone}-{j}.npy', cyclone_array)
 
     print(len(test_ds))
     print("Test ds")
     for i,(cyclone_array, cyclone, j) in tqdm(enumerate(test_ds)):
-        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/test/{cyclone}-{j}.npy', cyclone_array)
+        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/test/{cyclone}-{j}.npy', cyclone_array)
 
 if __name__ == '__main__':
-    generate_numpy_dataset(4, ['u'], [2])
+    generate_numpy_dataset(0, ['u'], [2])

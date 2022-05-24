@@ -186,8 +186,6 @@ class dynamics_back(nn.Module):
         super(dynamics_back, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
         self.dynamics.weight.data = torch.pinverse(omega.dynamics.weight.data.t())
-        print(self.dynamics.weight.data)
-        print(omega.dynamics.weight.data.t())
 
     def forward(self, x):
         x = self.dynamics(x)
