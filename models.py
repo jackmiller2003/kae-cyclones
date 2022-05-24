@@ -269,8 +269,8 @@ class regularAE(nn.Module):
             return out, out_back
 
 class predictionANN(nn.Module):
-    def __init__(self, alpha, b):
-        super(encoderNetSimple, self).__init__()
+    def __init__(self, alpha):
+        super(predictionANN, self).__init__()
 
         self.fc1 = nn.Linear(400, 16 * alpha)
         self.fc2 = nn.Linear(16 * alpha, 16 * alpha)

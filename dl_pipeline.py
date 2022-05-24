@@ -3,7 +3,10 @@ from models import *
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn
+import logging
 
+logging.basicConfig(level=logging.DEBUG, filename='log.txt')
+logging.debug('This will get logged')
 
 def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=128, backward=1):
     
@@ -122,6 +125,12 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
         iden_loss.append(avg_iden_loss/(ds_length))
         cons_loss.append(avg_cons_loss/(ds_length))
         losses.append(avg_loss / (ds_length))
+
+        logging.info(f"{epoch}. {avg_loss/(ds_length)}")
+        logging.info(f"Fwd loss: {fwd_loss}")
+        logging.info(f"Back loss: {back_loss}")
+        logging.info(f"Iden loss: {iden_loss}")
+        logging.info(f"Cons loss: {cons_loss}")
 
         print(f"{epoch}. {avg_loss/(ds_length)}")
         print(f"Fwd loss: {fwd_loss}")
@@ -248,6 +257,7 @@ def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epo
         cons_loss.append(avg_cons_loss/(ds_length))
         losses.append(avg_loss / (ds_length))
 
+
         print(f"{epoch}. {avg_loss/(ds_length)}")
         print(f"Fwd loss: {fwd_loss}")
         print(f"Back loss: {back_loss}")
@@ -270,12 +280,12 @@ def get_eigendecomp(model):
     return w, v
 
 def reconstruct_operator(w, v):
-    idx = w.argsort()[::-1]   
-    w = w[idx]
-    F = v[:,idx]
-    D = np.diag(w)
-    FDF = np.linalg.multi_dot([F, D, F.T])
-    return FDF
+    R = np.linalg.inv(v)
+    # create diagonal matrix from eigenvalues
+    L = np.diag(w)
+    # reconstruct the original matrix
+    B = v.dot(L).dot(R)
+    return B
 
 def create_synthetic_example(model, x, w, v, w_index):
     w[w_index] = 1
@@ -309,38 +319,23 @@ def import_models(load=True):
     return model_kae, model_ae
 
 if __name__ == '__main__':
+    model_kae = koopmanAE(4, steps=4, steps_back=4, alpha=1).to(0)
+    model_dae = koopmanAE(4, steps=4, steps_back=4, alpha=1).to(0)
+    regular_ae = regularAE(4, steps=4, steps_back=4, alpha=1).to(0)
+
+    model_kae.load_state_dict(torch.load('./saved_models/kae-model-continued-4.082315057579133.pt'))
+    model_dae.load_state_dict(torch.load('./saved_models/ae-model-continued-0.6384171716724326.pt'))
+    regular_ae.load_state_dict(torch.load('./saved_models/ae-model-continued-0.948112045283501.pt'))
+
     dataset, val_ds, test_ds = generate_example_dataset()
     loader = torch.utils.data.DataLoader(dataset, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_ds, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
 
-    print(dataset[20][0][0])
+    logging.info("Training DAE")
+    model_dae, losses2, fwd_loss2, back_loss2, iden_loss2, cons_loss2 = train(model_dae, loader, len(dataset), koopman=False, num_epochs=30)
+    logging.info("Training AE")
+    regular_ae, losses3, fwd_loss3, back_loss3, iden_loss3, cons_loss3 = train(regular_ae, loader, len(dataset), koopman=False, num_epochs=30)
 
-    model_kae, model_ae = import_models(load=False)
-
-    model_kae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_kae, loader, len(dataset), koopman=True)
-    model_ae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_ae, loader, len(dataset), koopman=False)
-
-    # print(len(val_ds))
-
-    # eval_ae_kae(model_kae, model_ae, val_ds, len(val_ds))
-
-    # w,v = get_eigendecomp(model_kae)
-
-    # plt.plot(w)
-    # plt.savefig('example-3.png')
-
-    # new, old = create_synthetic_example(model_kae, dataset[0][0][0].float().unsqueeze(0).to(0), w, v, 2)
-    # print(new)
-    # print(old)
-    # print(dataset[0][0][0].squeeze(0).squeeze(0).float().cpu().detach().numpy())
-    # seaborn.heatmap(new.squeeze(0).squeeze(0).cpu().detach().numpy())
-    # plt.savefig('new.png')
-    # plt.clf()
-    # plt.cla() 
-    # seaborn.heatmap(old.squeeze(0).squeeze(0).cpu().detach().numpy())
-    # plt.savefig('old.png')
-    # plt.clf()
-    # plt.cla() 
-    # seaborn.heatmap(dataset[0][0][0].squeeze(0).squeeze(0).float().cpu().detach().numpy())
-    # plt.savefig('orig.png')
-    # plt.clf()
-    # plt.cla() 
+    logging.info(f"{losses}, {fwd_loss}, {back_loss}, {iden_loss}, {cons_loss}")
+    logging.info(f"{losses2}, {fwd_loss2}, {back_loss2}, {iden_loss2}, {cons_loss2}")
+    logging.info(f"{losses3}, {fwd_loss3}, {back_loss3}, {iden_loss3}, {cons_loss3}")

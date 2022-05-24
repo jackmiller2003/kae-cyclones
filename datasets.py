@@ -107,7 +107,7 @@ class CycloneDataset(Dataset):
         for cyclone, data in self.tracks_dict.items():
             if len(data['coordinates']) > 1:
                 length += len(data['coordinates'][:-1])
-            return length       
+        return length       
     
     def __getitem__(self, idx):
         i = 0
@@ -167,12 +167,14 @@ def generate_example_dataset():
 
 def generate_prediction_dataset():
     train_ds = CycloneDataset('/g/data/x77/ob2720/partition/train/', tracks_path=train_json_path, 
-                                        save_np=False, load_np=True)
+                                        save_np=False, load_np=True, partition_name='train')
     val_ds = CycloneDataset('/g/data/x77/ob2720/partition/valid/', tracks_path=valid_json_path, 
                                         save_np=False, load_np=True, partition_name='valid')
     test_ds = CycloneDataset('/g/data/x77/ob2720/partition/test/', tracks_path=test_json_path,
                                          save_np=False, load_np=True, partition_name='test')
     
+    print(len(train_ds))
+
     return train_ds, val_ds, test_ds
 
 def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_levels):
@@ -187,15 +189,15 @@ def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_level
                                         save_np=True, load_np=False, partition_name='valid')
     test_ds = CycloneDataset('/g/data/x77/ob2720/partition/test/', tracks_path=test_json_path,
                                          save_np=True, load_np=False, partition_name='test')
-    print(len(train_ds))
-    print("Train ds")
-    for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
-        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/train/{cyclone}-{j}.npy', cyclone_array)
+    # print(len(train_ds))
+    # print("Train ds")
+    # for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
+    #     np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/train/{cyclone}-{j}.npy', cyclone_array)
     
-    print(len(val_ds))
-    print("Val ds")
-    for i,(cyclone_array, cyclone, j) in tqdm(enumerate(val_ds)):
-        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/valid/{cyclone}-{j}.npy', cyclone_array)
+    # print(len(val_ds))
+    # print("Val ds")
+    # for i,(cyclone_array, cyclone, j) in tqdm(enumerate(val_ds)):
+    #     np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/valid/{cyclone}-{j}.npy', cyclone_array)
 
     print(len(test_ds))
     print("Test ds")
