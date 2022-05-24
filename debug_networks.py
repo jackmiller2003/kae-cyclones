@@ -7,5 +7,5 @@ if __name__ == '__main__':
 
     model_kae, model_ae = import_models(load=True)
     
-    np.save('out-3.npy', (model_kae(dataset[0][0][1].float().unsqueeze(0).to(0)))[0][0].cpu().detach().numpy())
-    np.save('in-3.npy', dataset[0][0][1].float().unsqueeze(0).to(0)[0][0].cpu().detach().numpy())
+    np.save('out-7.npy', (model_kae(dataset[1501][0][0].float().unsqueeze(0).to(0)))[0][0].cpu().detach().numpy())
+    np.save('in-7.npy', dataset[1501][0][0].float().unsqueeze(0).to(0)[0][0].cpu().detach().numpy())

@@ -50,7 +50,7 @@ class CycloneToCycloneDataset(Dataset):
                     if i == idx:
                         if self.save_np:
                             cyclone_ds = xarray.open_dataset(self.cyclone_dir+cyclone+".nc", 
-                            engine='netcdf4', decode_cf=False, cache=True)
+                            engine='netcdf4', decode_cf=True, cache=True)
 
                             cyclone_ds = cyclone_ds[dict(time=list(range(-self.prediction_length+j, self.prediction_length+j)),
                                                     level=self.pressure_levels)][self.atmospheric_values]
@@ -71,11 +71,11 @@ class CycloneToCycloneDataset(Dataset):
 
                         if self.load_np:
                             if self.crop:
-                                cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones_crop/{self.prediction_length}/{self.partition_name}/{cyclone}-{j}.npy') * 0.004376953827249367
-                                reversed_array = np.flip(cyclone_array, 0).copy() * 0.004376953827249367
+                                cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones_crop/{self.prediction_length}/{self.partition_name}/{cyclone}-{j}.npy')
+                                reversed_array = np.flip(cyclone_array, 0).copy()
                             else:
-                                cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones/{self.prediction_length}/{self.partition_name}/{cyclone}-{j}.npy') * 0.004376953827249367
-                                reversed_array = np.flip(cyclone_array, 0).copy() * 0.004376953827249367
+                                cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones/{self.prediction_length}/{self.partition_name}/{cyclone}-{j}.npy')
+                                reversed_array = np.flip(cyclone_array, 0).copy()
 
                             return torch.from_numpy(cyclone_array), torch.from_numpy(reversed_array)
 
@@ -83,7 +83,7 @@ class CycloneToCycloneDataset(Dataset):
                     i += 1
 
 def generate_example_dataset():
-    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 2,
+    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 4,
                                         ['u'], [0], load_np=True, save_np=False, partition_name='train')
     val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 2,
                                         ['u'], [0], load_np=True, save_np=False, partition_name='valid')
@@ -104,15 +104,15 @@ def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_level
     # for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
     #     np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/train/{cyclone}-{j}.npy', cyclone_array)
     
+    print(len(val_ds))
     print("Val ds")
     for i,(cyclone_array, cyclone, j) in tqdm(enumerate(val_ds)):
         np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/valid/{cyclone}-{j}.npy', cyclone_array)
 
-    print(len(val_ds))
-
+    print(len(test_ds))
     print("Test ds")
     for i,(cyclone_array, cyclone, j) in tqdm(enumerate(test_ds)):
         np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/test/{cyclone}-{j}.npy', cyclone_array)
 
 if __name__ == '__main__':
-    generate_numpy_dataset(2, ['u'], [2])
+    generate_numpy_dataset(4, ['u'], [2])

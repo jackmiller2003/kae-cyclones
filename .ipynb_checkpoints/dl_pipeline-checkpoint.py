@@ -93,7 +93,8 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
                     ccons += eta * loss_consist
                 
                 else:
-                    loss += loss_identity 
+                    #loss += loss_identity 
+                    loss += loss_fwd
 
             avg_fwd_loss += cfwd.item()
             if koopman:
@@ -215,7 +216,7 @@ def import_models(load=True):
     model_ae.to(0)
 
     if load:
-        model_kae.load_state_dict(torch.load("./saved_models/kae-model-continued-52.7337572926966.pt"))
+        model_kae.load_state_dict(torch.load("./saved_models/ae-model-continued-1.7529660403603708.pt"))
         # model_ae.load_state_dict(torch.load("./saved_models/ae-model-continued-7869.197857755121.pt"))
     
     return model_kae, model_ae
@@ -226,8 +227,8 @@ if __name__ == '__main__':
 
     model_kae, model_ae = import_models(load=False)
 
-    model_kae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_kae, loader, len(dataset), koopman=True)
-    model_ae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_ae, loader, len(dataset), koopman=False)
+    model_kae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_kae, loader, len(dataset), koopman=False)
+    # model_ae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_ae, loader, len(dataset), koopman=False)
 
     # print(len(val_ds))
 

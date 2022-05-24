@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn
 
 
-def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20, steps=4, lamb=1e-2, nu=1e-1, eta=1e1, batch_size=128, backward=1):
+def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=128, backward=1):
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
@@ -93,7 +93,8 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
                     ccons += eta * loss_consist
                 
                 else:
-                    loss += loss_identity 
+                    #loss += loss_identity 
+                    loss += loss_fwd
 
             avg_fwd_loss += cfwd.item()
             if koopman:
@@ -102,9 +103,11 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
                 avg_cons_loss += ccons.item()
             else:
                 avg_iden_loss, avg_bwd_loss, avg_cons_loss = 0, 0, 0
+            
             avg_loss += loss.item()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # gradient clip
             optimizer.step()
 
             if i % 100 == 99:
@@ -215,7 +218,7 @@ def import_models(load=True):
     model_ae.to(0)
 
     if load:
-        model_kae.load_state_dict(torch.load("./saved_models/kae-model-continued-52.7337572926966.pt"))
+        model_kae.load_state_dict(torch.load("./saved_models/ae-model-continued-3.1817206502951767.pt"))
         # model_ae.load_state_dict(torch.load("./saved_models/ae-model-continued-7869.197857755121.pt"))
     
     return model_kae, model_ae
@@ -224,16 +227,16 @@ if __name__ == '__main__':
     dataset, val_ds, test_ds = generate_example_dataset()
     loader = torch.utils.data.DataLoader(dataset, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
 
+    print(dataset[20][0][0])
+
     model_kae, model_ae = import_models(load=False)
 
-    model_kae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_kae, loader, len(dataset), koopman=True)
+    # model_kae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_kae, loader, len(dataset), koopman=True)
     model_ae, losses, fwd_loss, back_loss, iden_loss, cons_loss = train(model_ae, loader, len(dataset), koopman=False)
 
     # print(len(val_ds))
 
     # eval_ae_kae(model_kae, model_ae, val_ds, len(val_ds))
-
-    print("Out of eval")
 
     # w,v = get_eigendecomp(model_kae)
 

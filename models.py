@@ -10,7 +10,6 @@ def gaussian_init_(n_units, std=1):
 class encoderNetSimple(nn.Module):
     def __init__(self, alpha, b):
         super(encoderNetSimple, self).__init__()
-        self.tanh = nn.Tanh()
 
         self.fc1 = nn.Linear(400, 16 * alpha)
         self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
@@ -21,14 +20,14 @@ class encoderNetSimple(nn.Module):
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, mean=2, std=1.0)
+                nn.init.xavier_normal_(m.weight)
                 if m.bias is not None:
-                    nn.init.constant_(m.bias, 1)
+                    nn.init.constant_(m.bias, 0)
     
     def forward(self, x):
         x = x.view(-1, 400)
-        x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
         x = self.fc3(x)
 
         return x
@@ -91,7 +90,6 @@ class encoderNet(nn.Module):
 class decoderNetSimple(nn.Module):
     def __init__(self, alpha, b):
         super(decoderNetSimple, self).__init__()
-        self.tanh = nn.Tanh()
         self.b = b
 
         self.fc1 = nn.Linear(b, 16 * alpha)
@@ -103,15 +101,15 @@ class decoderNetSimple(nn.Module):
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, mean=2, std=1.0)
+                nn.init.xavier_normal_(m.weight)
                 if m.bias is not None:
-                    nn.init.constant_(m.bias, 1)
+                    nn.init.constant_(m.bias, 0)
     
     def forward(self, x):
         x = x.view(-1, 1, self.b)
-        x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
-        x = self.tanh(self.fc3(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
+        x = self.fc3(x)
 
         return x.view(-1, 1, 20, 20)
 
@@ -271,3 +269,26 @@ class regularAE(nn.Module):
 
             out.append(self.decoder(z.contiguous())) 
             return out, out_back
+
+class predictionANN(nn.Module):
+    def __init__(self, alpha, b):
+        super(encoderNetSimple, self).__init__()
+
+        self.fc1 = nn.Linear(400, 16 * alpha)
+        self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
+        self.fc3 = nn.Linear(16 * alpha, 2)
+
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+    
+    def forward(self, x):
+        x = x.view(-1, 400)
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
+        x = self.fc3(x)
+
+        return x
