@@ -50,7 +50,7 @@ class CycloneToCycloneDataset(Dataset):
                     if i == idx:
                         if self.save_np:
                             cyclone_ds = xarray.open_dataset(self.cyclone_dir+cyclone+".nc", 
-                            engine='netcdf4', decode_cf=True, cache=True)
+                            engine='netcdf4', decode_cf=True, cache=True) # parallel, cunk
 
                             cyclone_ds = cyclone_ds[dict(time=list(range(-self.prediction_length+j, self.prediction_length+j)),
                                                     level=self.pressure_levels)][self.atmospheric_values]
@@ -88,7 +88,8 @@ class CycloneDataset(Dataset):
     """
 
     def __init__(self, cyclone_dir, tracks_path, save_np = False, load_np = True, crop = True, prediction_length = 0,
-                atmospheric_values = ['u'], pressure_levels=[2], partition_name='train'):
+                atmospheric_values = ['u'], pressure_levels=[2], partition_name='train', synthetic=False, 
+                synthetic_type='base_synthesis', sigma=0.1):
         self.cyclone_dir = cyclone_dir
         self.atmospheric_values = atmospheric_values
         self.pressure_levels = pressure_levels
@@ -98,25 +99,37 @@ class CycloneDataset(Dataset):
         self.crop = crop
         self.prediction_length = prediction_length
         self.partition_name = partition_name
+        self.synthetic_type = synthetic_type
+        self.sigma = sigma
+        self.synthetic = synthetic
 
         with open(tracks_path, 'r') as jp:
             self.tracks_dict = json.load(jp)
 
     def __len__(self):
+        if self.synthetic:
+            bound = 2
+        else:
+            bound = 1
         length = 0
         for cyclone, data in self.tracks_dict.items():
-            if len(data['coordinates']) > 1:
-                length += len(data['coordinates'][:-1])
+            if len(data['coordinates']) > bound:
+                length += len(data['coordinates'][:-bound])
         return length       
     
     def __getitem__(self, idx):
         i = 0
 
         for cyclone, data in self.tracks_dict.items():
-            j = 0
+            j = 1
 
-            if len(data['coordinates']) > 1:
-                for coordinate in data['coordinates'][:-1]:
+            if self.synthetic:
+                bound = 2
+            else:
+                bound = 1
+
+            if len(data['coordinates']) > bound:
+                for coordinate in data['coordinates'][:-bound]:
                     if i == idx:
                         if self.save_np:
                             cyclone_ds = xarray.open_dataset(self.cyclone_dir+cyclone+".nc", 
@@ -138,17 +151,27 @@ class CycloneDataset(Dataset):
                             return cyclone_array, cyclone, j
 
                         if self.load_np:
-                            cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones_crop/{self.prediction_length}/{self.atmospheric_values[0]}/{self.pressure_levels[0]}/{self.partition_name}/{cyclone}-{j}.npy')
-
+                            if self.synthetic:
+                                try:
+                                    cyclone_array = np.load(f'/g/data/x77/jm0124/synthetic_datasets/{self.synthetic_type}/{self.atmospheric_values[0]}/{self.pressure_levels[0]}/{self.sigma}/{self.partition_name}/{cyclone}-{j}.npy', \
+                                                            allow_pickle=True)
+                                except:
+                                    print(f'{cyclone}-{j}')
+                            else:
+                                cyclone_array = np.load(f'/g/data/x77/jm0124/np_cyclones_crop/{self.prediction_length}/{self.atmospheric_values[0]}/{self.pressure_levels[0]}/{self.partition_name}/{cyclone}-{j}.npy')
+                            
                             label = torch.from_numpy(np.array([
                                                         [float(data['coordinates'][j][0]), float(data['coordinates'][j+1][0])], 
                                                         [float(data['coordinates'][j][1]), float(data['coordinates'][j+1][1])]
                                                                 ]))
 
-                            return torch.from_numpy(cyclone_array), label
+                            return (torch.from_numpy(cyclone_array), label)
 
                     i += 1
                     j += 1
+
+# def generate_base_synthetic_dataset():
+    
 
 def generate_example_dataset():
     """
@@ -189,10 +212,10 @@ def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_level
                                         save_np=True, load_np=False, partition_name='valid')
     test_ds = CycloneDataset('/g/data/x77/ob2720/partition/test/', tracks_path=test_json_path,
                                          save_np=True, load_np=False, partition_name='test')
-    # print(len(train_ds))
-    # print("Train ds")
-    # for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
-    #     np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/train/{cyclone}-{j}.npy', cyclone_array)
+    print(len(train_ds))
+    print("Train ds")
+    for i,(cyclone_array, cyclone, j) in tqdm(enumerate(train_ds)):
+        np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/train/{cyclone}-{j}.npy', cyclone_array)
     
     # print(len(val_ds))
     # print("Val ds")

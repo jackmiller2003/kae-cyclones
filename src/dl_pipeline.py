@@ -7,6 +7,7 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, filename='log.txt')
 logging.debug('This will get logged')
+saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 
 def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=128, backward=1):
     
@@ -139,9 +140,9 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
         print(f"Cons loss: {cons_loss}")
         
         if koopman:
-            torch.save(model.state_dict(), f'./saved_models/kae-model-continued-{avg_loss/ds_length}.pt')
+            torch.save(model.state_dict(), f'{saved_models_path}/kae-model-continued-{avg_loss/ds_length}.pt')
         else:
-            torch.save(model.state_dict(), f'./saved_models/ae-model-continued-{avg_loss/ds_length}.pt')
+            torch.save(model.state_dict(), f'{saved_models_path}/dae-model-continued-{avg_loss/ds_length}.pt')
         
     
     return model, losses, fwd_loss, back_loss, iden_loss, cons_loss
@@ -319,23 +320,17 @@ def import_models(load=True):
     return model_kae, model_ae
 
 if __name__ == '__main__':
-    model_kae = koopmanAE(4, steps=4, steps_back=4, alpha=1).to(0)
-    model_dae = koopmanAE(4, steps=4, steps_back=4, alpha=1).to(0)
-    regular_ae = regularAE(4, steps=4, steps_back=4, alpha=1).to(0)
+    model_dae = koopmanAE(32, steps=4, steps_back=4, alpha=8).to(0)
 
-    model_kae.load_state_dict(torch.load('./saved_models/kae-model-continued-4.082315057579133.pt'))
-    model_dae.load_state_dict(torch.load('./saved_models/ae-model-continued-0.6384171716724326.pt'))
-    regular_ae.load_state_dict(torch.load('./saved_models/ae-model-continued-0.948112045283501.pt'))
+    # model_kae.load_state_dict(torch.load('./saved_models/kae-model-continued-4.082315057579133.pt'))
+    # model_dae.load_state_dict(torch.load('./saved_models/ae-model-continued-0.6384171716724326.pt'))
+    # regular_ae.load_state_dict(torch.load(f'{saved_models_path}/ae-model-continued-0.948112045283501.pt'))
 
     dataset, val_ds, test_ds = generate_example_dataset()
     loader = torch.utils.data.DataLoader(dataset, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_ds, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
 
     logging.info("Training DAE")
-    model_dae, losses2, fwd_loss2, back_loss2, iden_loss2, cons_loss2 = train(model_dae, loader, len(dataset), koopman=False, num_epochs=30)
-    logging.info("Training AE")
-    regular_ae, losses3, fwd_loss3, back_loss3, iden_loss3, cons_loss3 = train(regular_ae, loader, len(dataset), koopman=False, num_epochs=30)
-
-    logging.info(f"{losses}, {fwd_loss}, {back_loss}, {iden_loss}, {cons_loss}")
-    logging.info(f"{losses2}, {fwd_loss2}, {back_loss2}, {iden_loss2}, {cons_loss2}")
-    logging.info(f"{losses3}, {fwd_loss3}, {back_loss3}, {iden_loss3}, {cons_loss3}")
+    model_dae, losses2, fwd_loss2, back_loss2, iden_loss2, cons_loss2 = train(model_dae, loader, len(dataset), koopman=False, num_epochs=50)
+    # logging.info("Training AE")
+    # regular_ae, losses3, fwd_loss3, back_loss3, iden_loss3, cons_loss3 = train(regular_ae, loader, len(dataset), koopman=False, num_epochs=30)
