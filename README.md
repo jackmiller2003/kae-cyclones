@@ -15,6 +15,11 @@ python3 train_predictive_net.py --model predictionANN --num_epochs 5 --batch_siz
 ## Stability analysis, conserved values
 
 ## Generation of synthetic data
+This is the foundation of the paper. The process is as follows:
+1. Generate synthetic data by perturbing eigenvectors, using a randomly sampled vector. Alternatively, generate synthetic data using a generative adversarial model (GAN).
+2. Train a classification model to distinguish between real and fake cyclone images (will need to probably pre-generate and label some data with fake and real images).
+3. Red-mark images which do not pass the classification model (i.e. are not "cyclone" enough).
+4. Train a limited-capacity model using original data, full synthetic data and self-evaluated synthetic data, and compare performance between the three.
 ### Constructing synthetic data from perturbation
 Taking given examples, passing them through a trained model, perturbing the eigenvectors in the hidden state matrix, and then decoding these hidden states to generate new examples. $\mu$ and $\sigma$ are the mean and standard deviation of the distribution the random perturbation is sampled from. `choose_eigenvectors` is a user-provided function to determine which eigenvectors to perturb (default is the largest eigenvectors).
 ```bash
@@ -26,7 +31,7 @@ If you instead want to generate synthetic data through a GAN (generative adversa
 python3 gan_synthesis.py --num_epochs 20 --batch_size 256
 ```
 
-### GAN synthetic data evaluation
+### Synthetic data evaluation
 First, we train a classification model on real and fake cyclone images, so that it can distinguish between the two.
 ```bash
 python3 classification_evaluator.py
