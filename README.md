@@ -51,4 +51,5 @@ ___
 ## References
 * [Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
 * [A Koopman Approach to Understanding Sequence Neural Models](https://arxiv.org/abs/2102.07824)
+* [Introduction to Koopman operator theory of dynamical systems](https://www.mit.edu/~arbabi/research/KoopmanIntro.pdf)
 
