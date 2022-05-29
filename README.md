@@ -49,6 +49,6 @@ python3 train_predictive_net.py --model predictionANN --num_epochs 5 --batch_siz
 ```
 ___
 ## References
-[Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
-[A Koopman Approach to Understanding Sequence Neural Models](https://arxiv.org/abs/2102.07824)
+* [Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
+* [A Koopman Approach to Understanding Sequence Neural Models](https://arxiv.org/abs/2102.07824)
 
