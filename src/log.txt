@@ -3763,3 +3763,4 @@ INFO:root:Iden loss: [0.0, 0.0]
 INFO:root:Cons loss: [0.0, 0.0]
 INFO:root:Eigen loss: [751.6746392439328, 718.5152630776442]
 >>>>>>> 6287a27400ee8ab51c0738605f88c012aca30039
+DEBUG:root:This will get logged
