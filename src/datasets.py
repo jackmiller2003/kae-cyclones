@@ -121,11 +121,11 @@ class CycloneDataset(Dataset):
         i = 0
 
         for cyclone, data in self.tracks_dict.items():
-            j = 1
-
             if self.synthetic:
+                j = 1
                 bound = 2
             else:
+                j = 0
                 bound = 1
 
             if len(data['coordinates']) > bound:
@@ -169,8 +169,6 @@ class CycloneDataset(Dataset):
 
                     i += 1
                     j += 1
-
-# def generate_base_synthetic_dataset():
     
 
 def generate_example_dataset():
