@@ -11,3 +11,16 @@ This work is based on the paper [Forecasting Sequential Data Using Consistent Ko
 ## Stability analysis, conserved values
 
 ## Generation of synthetic data
+### Constructing synthetic data
+Taking given examples, passing them through a trained model, perturbing the eigenvectors in the hidden state matrix, and then decoding these hidden states to generate new examples. $\mu$ and $\sigma$ are the mean and standard deviation of the distribution the random perturbation is sampled from. `choose_eigenvectors` is a user-provided function to determine which eigenvectors to perturb (default is the largest eigenvectors).
+```bash
+python data_synthesis.py --mu 0 --sigma 0.1 --model koopmanAE --choose_eigenvectors np.max
+```
+
+### Using synthetic data in prediction
+Training a predictive neural network on raw, organic data vs organic + synthetic data. Will output plotted losses and comparison, as well as model structure. 
+```bash
+python train_predictive_net.py --model predictionANN --num_epochs 5 --batch_size 256
+```
+
+
