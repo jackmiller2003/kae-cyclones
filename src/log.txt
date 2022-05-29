@@ -1723,3 +1723,7 @@ DEBUG:matplotlib.font_manager:findfont: score(FontEntry(fname='/g/data/hh5/publi
 DEBUG:matplotlib.font_manager:findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0 to DejaVu Sans ('/g/data/hh5/public/apps/miniconda3/envs/analysis3-22.01/lib/python3.9/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf') with score of 0.050000.
 DEBUG:matplotlib.colorbar:locator: <matplotlib.ticker.AutoLocator object at 0x14d65b20d670>
 DEBUG:matplotlib.colorbar:locator: <matplotlib.ticker.AutoLocator object at 0x14d65b1113d0>
+DEBUG:root:This will get logged
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending name='Task-2' coro=<Kernel.poll_control_queue() running at /g/data/hh5/public/apps/miniconda3/envs/analysis3-22.01/lib/python3.9/site-packages/ipykernel/kernelbase.py:277> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1533c3a207c0>()]> cb=[_chain_future.<locals>._call_set_state() at /g/data/hh5/public/apps/miniconda3/envs/analysis3-22.01/lib/python3.9/asyncio/futures.py:391]>
+DEBUG:root:This will get logged
