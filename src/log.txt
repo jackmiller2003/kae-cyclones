@@ -3764,3 +3764,35 @@ INFO:root:Cons loss: [0.0, 0.0]
 INFO:root:Eigen loss: [751.6746392439328, 718.5152630776442]
 >>>>>>> 6287a27400ee8ab51c0738605f88c012aca30039
 DEBUG:root:This will get logged
+DEBUG:root:This will get logged
+INFO:root:Training DAE - only eigenloss
+INFO:root:Training DAE - only eigenloss
+INFO:root:0. 165.3303206504059
+INFO:root:Fwd loss: [165.3303206504059]
+INFO:root:Back loss: [0.0]
+INFO:root:Iden loss: [0.0]
+INFO:root:Cons loss: [0.0]
+INFO:root:Eigen loss: [0.0]
+INFO:root:Training DAE - only eigenloss
+INFO:root:0. 118.15369394695017
+INFO:root:Fwd loss: [118.15369394695017]
+INFO:root:Back loss: [0.0]
+INFO:root:Iden loss: [0.0]
+INFO:root:Cons loss: [0.0]
+INFO:root:Eigen loss: [0.0]
+DEBUG:root:This will get logged
+INFO:root:Training DAE - only eigenloss
+INFO:root:Training DAE - only eigenloss
+DEBUG:root:This will get logged
+INFO:root:Training DAE - only eigenloss
+INFO:root:Training DAE - only eigenloss
+DEBUG:root:This will get logged
+INFO:root:Training DAE - only eigenloss
+DEBUG:root:This will get logged
+INFO:root:Training DAE - only eigenloss
+INFO:root:0. 120.15977810297137
+INFO:root:Fwd loss: [118.6477460812604]
+INFO:root:Back loss: [0.0]
+INFO:root:Iden loss: [0.0]
+INFO:root:Cons loss: [0.0]
+INFO:root:Eigen loss: [1.5120318722974526]

@@ -102,7 +102,7 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
                     # this should force it to zero
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
-                    w_abs = np.min(np.absolute(w)) 
+                    w_abs = np.min(np.absolute(w))
                     loss += alpha * w_abs
                     ceigen += alpha * w_abs
 
@@ -129,6 +129,8 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
             optimizer.step()
 
             if i % 100 == 99:
+                if eigen_penal:
+                    print(f"Minimum eigenvalue: {w_abs}")
                 print(f"Loss: {avg_loss / (i)}")
                 print(f"Fwd loss: {avg_fwd_loss / (i)}")
                 print(f"Eigen loss: {avg_eigen_loss / (i)}")
