@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG, filename='log.txt')
 logging.debug('This will get logged')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 
-def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=128, backward=1):
+def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, device=0, num_epochs=20, steps=4, lamb=1, nu=1, eta=1e-2, alpha=5000, batch_size=128, backward=1):
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
@@ -21,12 +21,13 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
     back_loss = []
     iden_loss = []
     cons_loss = []
+    eigen_loss = []
     losses = []
 
     for epoch in range(num_epochs):  
-        avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss = 0, 0, 0, 0, 0      
+        avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
         for i, cyclone_array_list in tqdm(enumerate(train_loader), total=ds_length/batch_size):
-            loss, cfwd, cbwd, ciden, ccons = 0, 0, 0, 0, 0
+            loss, cfwd, cbwd, ciden, ccons, ceigen = 0, 0, 0, 0, 0, 0
                     
             if i == 0:
                 model.print_hidden = True
@@ -91,32 +92,49 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
                                 loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
                                                 torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)
 
-                    loss += loss_fwd + lamb * loss_identity +  nu * loss_bwd + eta * loss_consist
+                    loss += lamb * loss_identity +  nu * loss_bwd + eta * loss_consist
                     ciden += lamb * loss_identity
                     cbwd += nu * loss_bwd
                     ccons += eta * loss_consist
                 
-                else:
-                    #loss += loss_identity 
-                    loss += loss_fwd
+                if eigen_penal:
+                    # eigenloss determined by absolute value of minimum eigenvalue
+                    # this should force it to zero
+                    A = model.dynamics.dynamics.weight.cpu().detach().numpy()
+                    w, v = np.linalg.eig(A)
+                    w_abs = np.min(np.absolute(w))
+                    loss += alpha * w_abs
+                    ceigen += alpha * w_abs
+
+                loss += loss_fwd
 
             avg_fwd_loss += cfwd.item()
+
             if koopman:
                 avg_iden_loss += ciden.item()
                 avg_bwd_loss += cbwd.item()
                 avg_cons_loss += ccons.item()
             else:
                 avg_iden_loss, avg_bwd_loss, avg_cons_loss = 0, 0, 0
+
+            if eigen_penal:
+                avg_eigen_loss += ceigen.item()
+            else:
+                avg_eigen_loss = 0
             
             avg_loss += loss.item()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1) # gradient clip
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5) # gradient clip
             optimizer.step()
 
-            if i % 1000 == 999:
-                print(f"Loss: {avg_loss / (i * batch_size)}")
-                print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
+            if i % 100 == 99:
+                if eigen_penal:
+                    print(f"Minimum eigenvalue: {w_abs}")
+                print(f"Loss: {avg_loss / (i)}")
+                print(f"Fwd loss: {avg_fwd_loss / (i)}")
+                print(f"Eigen loss: {avg_eigen_loss / (i)}")
+                print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
                 # print(f"Iden loss: {avg_iden_loss / (i * batch_size)}")
                 # print(f"Back loss: {avg_bwd_loss / (i * batch_size)}")
                 # print(f"Cons loss: {avg_cons_loss / (i * batch_size)}")
@@ -125,6 +143,7 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
         back_loss.append(avg_bwd_loss/(ds_length))
         iden_loss.append(avg_iden_loss/(ds_length))
         cons_loss.append(avg_cons_loss/(ds_length))
+        eigen_loss.append(avg_eigen_loss/(ds_length))
         losses.append(avg_loss / (ds_length))
 
         logging.info(f"{epoch}. {avg_loss/(ds_length)}")
@@ -132,17 +151,19 @@ def train(model, train_loader, ds_length, koopman=True, device=0, num_epochs=20,
         logging.info(f"Back loss: {back_loss}")
         logging.info(f"Iden loss: {iden_loss}")
         logging.info(f"Cons loss: {cons_loss}")
+        logging.info(f"Eigen loss: {eigen_loss}")
 
         print(f"{epoch}. {avg_loss/(ds_length)}")
         print(f"Fwd loss: {fwd_loss}")
         print(f"Back loss: {back_loss}")
         print(f"Iden loss: {iden_loss}")
         print(f"Cons loss: {cons_loss}")
+        print(f"Eigen loss: {eigen_loss}")
         
         if koopman:
             torch.save(model.state_dict(), f'{saved_models_path}/kae-model-continued-{avg_loss/ds_length}.pt')
         else:
-            torch.save(model.state_dict(), f'{saved_models_path}/dae-model-continued-{avg_loss/ds_length}.pt')
+            torch.save(model.state_dict(), f'{saved_models_path}/dae-eigen-model-continued-{avg_loss/ds_length}.pt')
         
     
     return model, losses, fwd_loss, back_loss, iden_loss, cons_loss

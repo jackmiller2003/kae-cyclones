@@ -98,12 +98,11 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
                     ccons += eta * loss_consist
                 
                 if eigen_penal:
+                    # eigenloss determined by absolute value of minimum eigenvalue
+                    # this should force it to zero
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
-                    #w_abs = np.absolute(w)
-                    #loss_eigen = (1/w_abs.size) * np.sum(w_abs)
                     w_abs = np.min(np.absolute(w))
-
                     loss += alpha * w_abs
                     ceigen += alpha * w_abs
 
@@ -130,9 +129,17 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
             optimizer.step()
 
             if i % 100 == 99:
+<<<<<<< HEAD
                 print(f"Loss: {avg_loss / (i * batch_size)}")
                 print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
                 print(f"Eigen loss: {avg_eigen_loss / (i * batch_size)}")
+=======
+                if eigen_penal:
+                    print(f"Minimum eigenvalue: {w_abs}")
+                print(f"Loss: {avg_loss / (i)}")
+                print(f"Fwd loss: {avg_fwd_loss / (i)}")
+                print(f"Eigen loss: {avg_eigen_loss / (i)}")
+>>>>>>> b1820f71392873ad9a5e2a9297d5341c44f8245c
                 print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
                 # print(f"Iden loss: {avg_iden_loss / (i * batch_size)}")
                 # print(f"Back loss: {avg_bwd_loss / (i * batch_size)}")
