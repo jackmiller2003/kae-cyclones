@@ -130,9 +130,9 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
             optimizer.step()
 
             if i % 100 == 99:
-                print(f"Loss: {avg_loss / (i)}")
-                print(f"Fwd loss: {avg_fwd_loss / (i)}")
-                print(f"Eigen loss: {avg_eigen_loss / (i)}")
+                print(f"Loss: {avg_loss / (i * batch_size)}")
+                print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
+                print(f"Eigen loss: {avg_eigen_loss / (i * batch_size)}")
                 print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
                 # print(f"Iden loss: {avg_iden_loss / (i * batch_size)}")
                 # print(f"Back loss: {avg_bwd_loss / (i * batch_size)}")
