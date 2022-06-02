@@ -72,3 +72,4 @@ ___
 * [Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
 * [A Koopman Approach to Understanding Sequence Neural Models](https://arxiv.org/abs/2102.07824)
 * [Introduction to Koopman operator theory of dynamical systems](https://www.mit.edu/~arbabi/research/KoopmanIntro.pdf)
+* [Deep Learning with Eigenvalue Decay Regularizer](https://arxiv.org/pdf/1604.06985.pdf?fbclid=IwAR2iY9cu3d_yxF_Kg_tM2dJeLe2DHJbc8CagUFuvXJhlYEG4WDRZrUJRXxY)
