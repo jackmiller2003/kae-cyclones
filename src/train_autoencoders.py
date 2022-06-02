@@ -9,11 +9,13 @@ import argparse
 import logging
 from wandb import wandb
 import os
+from pathlib import Path
 
 os.environ["WANDB_MODE"] = "offline"
 
 logging.basicConfig(level=logging.DEBUG, filename='log-ae.txt')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
+wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
 
 # TRAINING ARGUMENTS
 parser = argparse.ArgumentParser(description='Autoencoder Prediction')
@@ -62,7 +64,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       "architecture": args.model,
       "dataset": "Sub-sampled cyclone dataset",
       "epochs": args.num_epochs,
-      "weight_decay": args.weight_decay
+      "weight_decay": args.weight_decay,
+      dir=wandb_dir
       })
     
     print(wandb.run.settings.mode)
@@ -157,6 +160,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
         
+        print("Logging wandb")
+
         wandb.log({
             'loss':avg_loss/train_size,
             'identity loss': avg_iden_loss/train_size,
