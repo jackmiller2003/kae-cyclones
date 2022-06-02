@@ -9,6 +9,8 @@ logging.basicConfig(level=logging.DEBUG, filename='log.txt')
 logging.debug('This will get logged')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 
+
+
 def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, device=0, num_epochs=20, steps=4, lamb=1, nu=1, eta=1e-2, alpha=5000, batch_size=128, backward=1):
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
@@ -129,17 +131,9 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
             optimizer.step()
 
             if i % 100 == 99:
-<<<<<<< HEAD
                 print(f"Loss: {avg_loss / (i * batch_size)}")
                 print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
                 print(f"Eigen loss: {avg_eigen_loss / (i * batch_size)}")
-=======
-                if eigen_penal:
-                    print(f"Minimum eigenvalue: {w_abs}")
-                print(f"Loss: {avg_loss / (i)}")
-                print(f"Fwd loss: {avg_fwd_loss / (i)}")
-                print(f"Eigen loss: {avg_eigen_loss / (i)}")
->>>>>>> b1820f71392873ad9a5e2a9297d5341c44f8245c
                 print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
                 # print(f"Iden loss: {avg_iden_loss / (i * batch_size)}")
                 # print(f"Back loss: {avg_bwd_loss / (i * batch_size)}")

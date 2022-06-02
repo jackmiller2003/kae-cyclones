@@ -1,0 +1,5 @@
+[default]
+entity = koopman_cyclone
+project = koopmakae
+base_url = https://api.wandb.ai
+
