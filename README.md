@@ -57,7 +57,7 @@ To run these scripts on NCI, be apart of the hh5 group and then run:
 ```
 module use /g/data/hh5/public/modules
 module load conda/analysis3-22.01
-python -m pip install pytorch==1.10.0 --user
+module load pytorch/1.10.0
 ```
 
 ## Syncing W&B
