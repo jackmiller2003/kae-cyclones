@@ -103,3 +103,4 @@
 2022-06-03 19:42:51,899 DEBUG   HandlerThread:250860 [handler.py:handle_request():141] handle_request: partial_history
 2022-06-03 19:45:59,350 DEBUG   HandlerThread:250860 [handler.py:handle_request():141] handle_request: partial_history
 2022-06-03 19:48:56,044 DEBUG   HandlerThread:250860 [handler.py:handle_request():141] handle_request: partial_history
+2022-06-03 19:52:10,475 DEBUG   HandlerThread:250860 [handler.py:handle_request():141] handle_request: partial_history

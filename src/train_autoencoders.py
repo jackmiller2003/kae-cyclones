@@ -9,11 +9,13 @@ import argparse
 import logging
 from wandb import wandb
 import os
+from pathlib import Path
 
 os.environ["WANDB_MODE"] = "offline"
 
 logging.basicConfig(level=logging.DEBUG, filename='log-ae.txt')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
+wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
 
 # TRAINING ARGUMENTS
 parser = argparse.ArgumentParser(description='Autoencoder Prediction')
@@ -40,7 +42,7 @@ parser.add_argument('--alpha', type=float, default='10', help='eigen factor')
 #
 parser.add_argument('--learning_rate', type=float, default='1e-3', help='learning rate')
 #
-parser.add_argument('--weight_decay', type=float, default='0.01', help='weight decay')
+parser.add_argument('--weight_decay', type=float, default='0.01', help='learning rate')
 
 args = parser.parse_args()
 
@@ -55,15 +57,15 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       # Set the project where this run will be logged
       project="Koopman-autoencoders", 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-      #name=f"experiment_{args.model}_{args.loss_terms}", 
-      name = "eigenloss_sum_of_eigenvalues_wd=0.05",
+      name=f"experiment_{args.model}_{args.loss_terms}", 
       # Track hyperparameters and run metadata
       config={
       "learning_rate": args.learning_rate,
       "architecture": args.model,
       "dataset": "Sub-sampled cyclone dataset",
       "epochs": args.num_epochs,
-      "weight_decay": args.weight_decay
+      "weight_decay": args.weight_decay,
+      dir=wandb_dir
       })
     
     print(wandb.run.settings.mode)
@@ -127,9 +129,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
                 if args.loss_terms == 'e':
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
-                    # w_abs = np.max(np.absolute(w))
-                    # sum all eigenvalue magnitudes and divide by number of eigenvalues
-                    w_abs = np.sum(np.absolute(w))/w.shape[0]
+                    w_abs = np.max(np.absolute(w))
                     closs += args.alpha * w_abs
                     ceigen += args.alpha * w_abs
         
@@ -160,6 +160,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
         
+        print("Logging wandb")
+
         wandb.log({
             'loss':avg_loss/train_size,
             'identity loss': avg_iden_loss/train_size,
