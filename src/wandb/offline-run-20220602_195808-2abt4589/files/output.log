@@ -1,0 +1,64 @@
+
+offline
+664it [05:41,  1.94it/s]
+664it [05:56,  1.86it/s]
+664it [05:40,  1.95it/s]
+664it [05:43,  1.93it/s]
+664it [06:23,  1.73it/s]
+664it [06:24,  1.73it/s]
+664it [05:39,  1.96it/s]
+664it [06:15,  1.77it/s]
+664it [05:42,  1.94it/s]
+664it [05:39,  1.96it/s]
+664it [05:40,  1.95it/s]
+664it [05:40,  1.95it/s]
+664it [05:37,  1.97it/s]
+664it [05:41,  1.95it/s]
+664it [05:41,  1.94it/s]
+664it [05:44,  1.93it/s]
+664it [05:40,  1.95it/s]
+664it [05:40,  1.95it/s]
+664it [06:30,  1.70it/s]
+664it [05:44,  1.93it/s]
+664it [06:15,  1.77it/s]
+664it [05:44,  1.93it/s]
+664it [05:43,  1.93it/s]
+664it [05:44,  1.93it/s]
+664it [05:41,  1.94it/s]
+664it [05:41,  1.94it/s]
+664it [05:39,  1.95it/s]
+664it [05:55,  1.87it/s]
+664it [05:38,  1.96it/s]
+664it [05:41,  1.95it/s]
+664it [05:41,  1.94it/s]
+664it [05:43,  1.93it/s]
+664it [05:41,  1.95it/s]
+664it [06:03,  1.83it/s]
+664it [05:42,  1.94it/s]
+664it [05:38,  1.96it/s]
+664it [05:38,  1.96it/s]
+664it [05:40,  1.95it/s]
+664it [05:41,  1.95it/s]
+664it [05:39,  1.95it/s]
+664it [05:41,  1.94it/s]
+664it [06:27,  1.71it/s]
+664it [05:43,  1.93it/s]
+664it [05:40,  1.95it/s]
+664it [06:04,  1.82it/s]
+664it [05:42,  1.94it/s]
+664it [05:44,  1.93it/s]
+664it [06:20,  1.74it/s]
+664it [05:43,  1.93it/s]
+664it [06:12,  1.78it/s]
+Traceback (most recent call last):
+  File "/home/156/cn1951/kae-cyclones/src/train_autoencoders.py", line 190, in <module>
+    train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds))
+  File "/home/156/cn1951/kae-cyclones/src/train_autoencoders.py", line 172, in train
+    torch.save(model.state_dict(), f'{saved_models_path}/dae-eigen-{avg_loss/train_size}.pt')
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/serialization.py", line 376, in save
+    with _open_file_like(f, 'wb') as opened_file:
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/serialization.py", line 230, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/serialization.py", line 211, in __init__
+    super(_open_file, self).__init__(open(name, mode))
+PermissionError: [Errno 13] Permission denied: '/home/156/jm0124/kae-cyclones/saved_models/dae-eigen-0.44774481654167175.pt'
