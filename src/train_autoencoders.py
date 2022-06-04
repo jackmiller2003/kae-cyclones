@@ -1,5 +1,6 @@
 from datasets import *
 from models import *
+import dl_pipeline
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn
@@ -13,7 +14,7 @@ from pathlib import Path
 
 os.environ["WANDB_MODE"] = "offline"
 
-logging.basicConfig(level=logging.DEBUG, filename='log-ae.txt')
+logging.basicConfig(level=logging.DEBUG, filename='log-ae-3.txt')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
 
@@ -43,8 +44,15 @@ parser.add_argument('--alpha', type=float, default='10', help='eigen factor')
 parser.add_argument('--learning_rate', type=float, default='1e-3', help='learning rate')
 #
 parser.add_argument('--weight_decay', type=float, default='0.01', help='learning rate')
+#
+parser.add_argument('--eigen_init', type=bool, default='True', help='initialise eigenvalues close to unit circle')
+#
+parser.add_argument('--experiment_name', type=str, default='', help='experiment name')
 
 args = parser.parse_args()
+
+if args.experiment_name == '':
+    args.experiment_name = f"experiment_{args.model}_{args.loss_terms}"
 
 def train(model, device, train_loader, val_loader, train_size, val_size):
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
@@ -57,7 +65,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       # Set the project where this run will be logged
       project="Koopman-autoencoders", 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-      name=f"experiment_{args.model}_{args.loss_terms}", 
+      name=args.experiment_name, 
+      dir=wandb_dir,
       # Track hyperparameters and run metadata
       config={
       "learning_rate": args.learning_rate,
@@ -65,7 +74,6 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       "dataset": "Sub-sampled cyclone dataset",
       "epochs": args.num_epochs,
       "weight_decay": args.weight_decay,
-      dir=wandb_dir
       })
     
     print(wandb.run.settings.mode)
@@ -159,8 +167,18 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['bwd'].append(avg_bwd_loss/train_size)
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
-        
-        print("Logging wandb")
+
+        if epoch % 5 == 4:
+            forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)
+
+            if epoch == 4:
+                loss_dict['fwd_val'] = [forward_val]
+            else:
+                loss_dict['fwd_val'].append(forward_val)
+            
+            wandb.log({'forward validation': forward_val})
+    
+        logging.info(loss_dict)
 
         wandb.log({
             'loss':avg_loss/train_size,
@@ -171,9 +189,10 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             'eigenvalue loss': avg_eigen_loss/train_size
         })
 
-        logging.info(loss_dict)
-    
-    torch.save(model.state_dict(), f'{saved_models_path}/dae-eigen-{avg_loss/train_size}.pt')
+        if epoch % 10 == 9:
+            torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-temp-{epoch}.pt')
+
+    torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
     
     return model, loss_dict
 

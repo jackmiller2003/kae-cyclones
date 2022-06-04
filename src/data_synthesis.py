@@ -10,7 +10,6 @@ import copy
 
 
 class DataSynthesis:
-
     def __init__(self, mu, sigma, model, choose_eigenvectors):
         self.mu = mu
         self.sigma = sigma 
@@ -84,12 +83,23 @@ class DataSynthesis:
         B = v.dot(L).dot(R)
         return B
 
-if __name__ == "__main__":
-    saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
-    model_dae = koopmanAE(32, steps=4, steps_back=4, alpha=8).to(0)
-    model_dae.load_state_dict(torch.load(f'{saved_models_path}/dae-model-continued-0.4210312087978713.pt'))
-    model_dae.to(0)
-    def choose_eigenvectors(): return np.argmax
-    data_synthesiser = DataSynthesis(mu=0, sigma=0.5, model_dae, choose_eigenvectors)
-    data_synthesiser.generate_new_data()
+def reconstruct_operator(w, v):
+    """
+    Recreate a matrix from its eigenvalues and eigenvectors.
+    """
+    R = np.linalg.inv(v)
+    # create diagonal matrix from eigenvalues
+    L = np.diag(w)
+    # reconstruct the original matrix
+    B = v.dot(L).dot(R)
+    return B
 
+if __name__ == "__main__":
+    # saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
+    # model_dae = koopmanAE(32, steps=4, steps_back=4, alpha=8).to(0)
+    # model_dae.load_state_dict(torch.load(f'{saved_models_path}/dae-model-continued-0.4210312087978713.pt'))
+    # model_dae.to(0)
+    # def choose_eigenvectors(): return np.argmax
+    # data_synthesiser = DataSynthesis(mu=0, sigma=0.5, model_dae, choose_eigenvectors)
+    # data_synthesiser.generate_new_data()
+    print("here")

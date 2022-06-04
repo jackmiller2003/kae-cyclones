@@ -1,11 +1,19 @@
 from torch import nn
 import torch
 import torch.nn.functional as F
+from data_synthesis import *
 
 def gaussian_init_(n_units, std=1):    
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
     Omega = sampler.sample((n_units, n_units))[..., 0]  
     return Omega
+
+def eigen_init_(n_units, std=1):
+    sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
+    Omega = sampler.sample((n_units, n_units))[..., 0]  
+    w, v = np.linalg.eig(Omega.cpu().detach().numpy())
+    w =np.random.uniform(-5,5, w.shape[0])
+    return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
     def __init__(self, alpha, b):
@@ -170,12 +178,16 @@ class decoderNet(nn.Module):
         return x
 
 class dynamics(nn.Module):
-    def __init__(self, b, init_scale):
+    def __init__(self, b, init_scale, eigen_init=False):
         super(dynamics, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
-        self.dynamics.weight.data = gaussian_init_(b, std=1)           
-        U, _, V = torch.svd(self.dynamics.weight.data)
-        self.dynamics.weight.data = torch.mm(U, V.t()) * init_scale
+
+        if eigen_init:
+            self.dynamics.weight.data = eigen_init_(b, std=1)
+        else:
+            self.dynamics.weight.data = gaussian_init_(b, std=1)           
+            U, _, V = torch.svd(self.dynamics.weight.data)
+            self.dynamics.weight.data = torch.mm(U, V.t()) * init_scale
     
     def forward(self, x):
         x = self.dynamics(x)
@@ -204,7 +216,7 @@ class koopmanAE(nn.Module):
             self.encoder = encoderNet(alpha = alpha, b=b)
             self.decoder = decoderNet(alpha = alpha, b=b)
         
-        self.dynamics = dynamics(b, init_scale)
+        self.dynamics = dynamics(b, init_scale, eigen_init=True)
         self.backdynamics = dynamics_back(b, self.dynamics)
         self.print_hidden = print_hidden
 
