@@ -9,6 +9,7 @@ import argparse
 import logging
 from wandb import wandb
 import os
+<<<<<<< HEAD
 from pathlib import Path
 
 os.environ["WANDB_MODE"] = "offline"
@@ -16,6 +17,13 @@ os.environ["WANDB_MODE"] = "offline"
 logging.basicConfig(level=logging.DEBUG, filename='log-ae-3.txt')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
+=======
+
+os.environ["WANDB_MODE"] = "offline"
+
+logging.basicConfig(level=logging.DEBUG, filename='log-ae.txt')
+saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
+>>>>>>> refs/remotes/origin/main
 
 # TRAINING ARGUMENTS
 parser = argparse.ArgumentParser(description='Autoencoder Prediction')
@@ -42,6 +50,7 @@ parser.add_argument('--alpha', type=float, default='10', help='eigen factor')
 #
 parser.add_argument('--learning_rate', type=float, default='1e-3', help='learning rate')
 #
+<<<<<<< HEAD
 parser.add_argument('--weight_decay', type=float, default='0.01', help='learning rate')
 #
 parser.add_argument('--eigen_init', type=bool, default='True', help='initialise eigenvalues close to unit circle')
@@ -53,6 +62,12 @@ args = parser.parse_args()
 if args.experiment_name == '':
     args.experiment_name = f"experiment_{args.model}_{args.loss_terms}"
 
+=======
+parser.add_argument('--weight_decay', type=float, default='0.01', help='weight decay')
+
+args = parser.parse_args()
+
+>>>>>>> refs/remotes/origin/main
 def train(model, device, train_loader, val_loader, train_size, val_size):
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
@@ -64,15 +79,24 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       # Set the project where this run will be logged
       project="Koopman-autoencoders", 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
+<<<<<<< HEAD
       name=args.experiment_name, 
       dir=wandb_dir,
+=======
+      #name=f"experiment_{args.model}_{args.loss_terms}", 
+      name = "eigenloss_sum_of_eigenvalues_wd=0.05",
+>>>>>>> refs/remotes/origin/main
       # Track hyperparameters and run metadata
       config={
       "learning_rate": args.learning_rate,
       "architecture": args.model,
       "dataset": "Sub-sampled cyclone dataset",
       "epochs": args.num_epochs,
+<<<<<<< HEAD
       "weight_decay": args.weight_decay,
+=======
+      "weight_decay": args.weight_decay
+>>>>>>> refs/remotes/origin/main
       })
     
     print(wandb.run.settings.mode)
@@ -136,7 +160,13 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
                 if args.loss_terms == 'e':
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
+<<<<<<< HEAD
                     w_abs = np.max(np.absolute(w))
+=======
+                    # w_abs = np.max(np.absolute(w))
+                    # sum all eigenvalue magnitudes and divide by number of eigenvalues
+                    w_abs = np.sum(np.absolute(w))/w.shape[0]
+>>>>>>> refs/remotes/origin/main
                     closs += args.alpha * w_abs
                     ceigen += args.alpha * w_abs
         
@@ -167,11 +197,14 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
         
+<<<<<<< HEAD
         print("Logging in log-ae")
         logging.info(loss_dict)
 
         print("Logging wandb")
 
+=======
+>>>>>>> refs/remotes/origin/main
         wandb.log({
             'loss':avg_loss/train_size,
             'identity loss': avg_iden_loss/train_size,
