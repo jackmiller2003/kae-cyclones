@@ -76,3 +76,4 @@ ___
 * [Spectral Properties of Dynamical Systems, Model Reduction and Decompositions](https://link.springer.com/content/pdf/10.1007/s11071-005-2824-x.pdf)
 * [Nonlinear dynamics and chaos](https://www.fulviofrisone.com/attachments/article/464/Strogatz,%20S.H.%20-%20Nonlinear%20dynamics%20and%20chaos.pdf)
 * [Data-driven spectral analysis for coordinative structures in periodic human locomotion](https://www.nature.com/articles/s41598-019-53187-1.pdf)
+* [PCA-Initialized Deep Neural Networks Applied To Document Image Analysis](https://arxiv.org/pdf/1702.00177.pdf)
