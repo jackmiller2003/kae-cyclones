@@ -67,6 +67,24 @@ Use the script when in src:
 ```
 wandb sync --sync-all wandb 
 ```
+# Paper To-Do
+
+Tests to run:
+1. Eigen regularisation:
+  - Mean eigenvalue
+  - Max eigenvalue
+  - Inverse min eigenvalue
+2. Eigen initialisation
+  - Uniform distribution
+  - Gaussian
+  - Double hump Gaussian
+3. Cyclones
+  - 2x2 matrix init, no init etc.
+4. Damped pendulum
+  - 2x2 matrix init, no init etc.
+5. Fashion MNIST
+  - 2x2 matrix init, no init etc.
+
 ___
 ## References
 * [Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
