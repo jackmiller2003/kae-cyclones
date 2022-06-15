@@ -11,6 +11,7 @@ import logging
 from wandb import wandb
 import os
 from pathlib import Path
+import dataset_generation
 
 os.environ["WANDB_MODE"] = "offline"
 
@@ -47,7 +48,13 @@ parser.add_argument('--weight_decay', type=float, default='0.01', help='learning
 #
 parser.add_argument('--eigen_init', type=bool, default='True', help='initialise eigenvalues close to unit circle')
 #
+parser.add_argument('--eigen_init_maxmin', type=float, default='2', help='maxmin value for uniform distribution')
+#
 parser.add_argument('--experiment_name', type=str, default='', help='experiment name')
+#
+parser.add_argument('--dataset', type=str, default='cyclone', help='dataset')
+#
+parser.add_argument('--init_distribution', type=str, default='uniform', help='eigenvalue initialisation distribution')
 
 args = parser.parse_args()
 
@@ -65,13 +72,13 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       # Set the project where this run will be logged
       project="Koopman-autoencoders", 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-      name=args.experiment_name, 
+      name=f"{args.experiment_name}-{args.dataset}", 
       dir=wandb_dir,
       # Track hyperparameters and run metadata
       config={
       "learning_rate": args.learning_rate,
       "architecture": args.model,
-      "dataset": "Sub-sampled cyclone dataset",
+      "dataset": args.dataset,
       "epochs": args.num_epochs,
       "weight_decay": args.weight_decay,
       })
@@ -169,7 +176,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
 
         if epoch % 5 == 4:
-            forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)
+            forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
 
             if epoch == 4:
                 loss_dict['fwd_val'] = [forward_val]
@@ -198,16 +205,23 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
 
 if __name__ == '__main__':
     if args.model == 'dynamicKAE':
-        train_ds, val_ds, test_ds = generate_example_dataset()
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16).to(0)
+        
+        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=True, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
             logging.info(f"Loading model: {args.pre_trained}")
             model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
 
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        if args.dataset == 'cyclone':
+            train_ds, val_ds, test_ds = generate_example_dataset()
+            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        elif args.dataset == 'pendulum':
+            Xtrain, Xval, Xtest = pendulum_to_ds(4, args.batch_size)
+
+            loader = torch.utils.data.DataLoader(Xtrain, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(Xval, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
 
         logging.info("Training DAE")
         train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds))

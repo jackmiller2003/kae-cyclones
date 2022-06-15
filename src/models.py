@@ -8,11 +8,21 @@ def gaussian_init_(n_units, std=1):
     Omega = sampler.sample((n_units, n_units))[..., 0]  
     return Omega
 
-def eigen_init_(n_units, std=1):
+def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
     Omega = sampler.sample((n_units, n_units))[..., 0]  
     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
-    w =np.random.uniform(-5,5, w.shape[0])
+
+    if distribution == 'uniform':
+        w.real = np.random.uniform(-maxmin,maxmin, w.shape[0])
+        w.imag = np.random.uniform(-maxmin,maxmin, w.shape[0])
+    elif distrbution == 'gaussian':
+        w.real = np.random.normal(loc=0, std=std, w.shape[0])
+        w.imag = np.random.normal(loc=0, std=std, w.shape[0])
+    elif distrbution == 'double-gaussian':
+        w.real = np.random.normal(loc=1, std=std, w.shape[0]) + np.random.normal(loc=-1, std=std, w.shape[0])
+        w.imag = np.random.normal(loc=0, std=std, w.shape[0]) + np.random.normal(loc=-1, std=std, w.shape[0])
+    
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
@@ -178,12 +188,12 @@ class decoderNet(nn.Module):
         return x
 
 class dynamics(nn.Module):
-    def __init__(self, b, init_scale, eigen_init=False):
+    def __init__(self, b, init_scale, eigen_init=False, eigen_distribution='uniform', maxmin=2):
         super(dynamics, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
 
         if eigen_init:
-            self.dynamics.weight.data = eigen_init_(b, std=1)
+            self.dynamics.weight.data = eigen_init_(b, std=1, maxmin=maxmin)
         else:
             self.dynamics.weight.data = gaussian_init_(b, std=1)           
             U, _, V = torch.svd(self.dynamics.weight.data)
@@ -204,7 +214,7 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
-    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False):
+    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform'):
         super(koopmanAE, self).__init__()
         self.steps = steps
         self.steps_back = steps_back
@@ -216,7 +226,7 @@ class koopmanAE(nn.Module):
             self.encoder = encoderNet(alpha = alpha, b=b)
             self.decoder = decoderNet(alpha = alpha, b=b)
         
-        self.dynamics = dynamics(b, init_scale, eigen_init=True)
+        self.dynamics = dynamics(b, init_scale, eigen_init=eigen_init, maxmin=maxmin, eigen_distribution=eigen_distribution)
         self.backdynamics = dynamics_back(b, self.dynamics)
         self.print_hidden = print_hidden
 
