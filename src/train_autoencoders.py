@@ -142,6 +142,9 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
                 cfwd += loss_fwd
 
                 if args.loss_terms == 'e':
+                    # How does torch backprop this?
+                    # You can write the same code in torch
+                    # eigvals give you back the eigenvalues
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
                     w_abs = np.max(np.absolute(w))
@@ -205,23 +208,26 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
 
 if __name__ == '__main__':
     if args.model == 'dynamicKAE':
-        
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=True, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin).to(0)
+        if args.dataset == 'cyclone':
+            train_ds, val_ds, test_ds = generate_example_dataset()
+            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            input_size = 400
+        elif args.dataset == 'pendulum':
+            train_ds, val_ds, test_ds = dataset_generation.pendulum_to_ds(4, args.batch_size)
+
+            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            input_size = 64
+
+            print(train_ds[0])
+
+        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=True, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
             logging.info(f"Loading model: {args.pre_trained}")
             model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
-
-        if args.dataset == 'cyclone':
-            train_ds, val_ds, test_ds = generate_example_dataset()
-            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        elif args.dataset == 'pendulum':
-            Xtrain, Xval, Xtest = pendulum_to_ds(4, args.batch_size)
-
-            loader = torch.utils.data.DataLoader(Xtrain, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-            val_loader = torch.utils.data.DataLoader(Xval, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
 
         logging.info("Training DAE")
         train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds))

@@ -9,6 +9,7 @@ def gaussian_init_(n_units, std=1):
     return Omega
 
 def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
+    # Orthogoonal matrices
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
     Omega = sampler.sample((n_units, n_units))[..., 0]  
     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
@@ -17,19 +18,20 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
         w.real = np.random.uniform(-maxmin,maxmin, w.shape[0])
         w.imag = np.random.uniform(-maxmin,maxmin, w.shape[0])
     elif distrbution == 'gaussian':
-        w.real = np.random.normal(loc=0, std=std, w.shape[0])
-        w.imag = np.random.normal(loc=0, std=std, w.shape[0])
+        w.real = np.random.normal(loc=0, std=std, size=w.shape[0])
+        w.imag = np.random.normal(loc=0, std=std, size=w.shape[0])
     elif distrbution == 'double-gaussian':
-        w.real = np.random.normal(loc=1, std=std, w.shape[0]) + np.random.normal(loc=-1, std=std, w.shape[0])
-        w.imag = np.random.normal(loc=0, std=std, w.shape[0]) + np.random.normal(loc=-1, std=std, w.shape[0])
+        w.real = np.random.normal(loc=1, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
+        w.imag = np.random.normal(loc=0, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
     
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
-    def __init__(self, alpha, b):
+    def __init__(self, alpha, b, input_size=64):
         super(encoderNetSimple, self).__init__()
+        self.input_size = input_size
 
-        self.fc1 = nn.Linear(400, 16 * alpha)
+        self.fc1 = nn.Linear(self.input_size, 16 * alpha)
         self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
         self.fc3 = nn.Linear(16 * alpha, b)
 
@@ -43,7 +45,7 @@ class encoderNetSimple(nn.Module):
                     nn.init.constant_(m.bias, 0)
     
     def forward(self, x):
-        x = x.view(-1, 400)
+        x = x.view(-1, self.input_size)
         x = F.leaky_relu(self.fc1(x))
         x = F.leaky_relu(self.fc2(x))
         x = self.fc3(x)
@@ -106,13 +108,15 @@ class encoderNet(nn.Module):
         return x
 
 class decoderNetSimple(nn.Module):
-    def __init__(self, alpha, b):
+    def __init__(self, alpha, b, input_size=64):
         super(decoderNetSimple, self).__init__()
         self.b = b
 
+        self.input_size = input_size
+
         self.fc1 = nn.Linear(b, 16 * alpha)
         self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
-        self.fc3 = nn.Linear(16 * alpha, 400)
+        self.fc3 = nn.Linear(16 * alpha, self.input_size)        
 
         self.init_weights()
 
@@ -129,7 +133,10 @@ class decoderNetSimple(nn.Module):
         x = F.leaky_relu(self.fc2(x))
         x = self.fc3(x)
 
-        return x.view(-1, 1, 20, 20)
+        if self.input_size == 400:
+            return x.view(-1, 1, 20, 20)
+        else:
+            return x.view(-1, 1, 64)
 
 class decoderNet(nn.Module):
     def __init__(self, alpha, b):
@@ -214,14 +221,14 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
-    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform'):
+    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400):
         super(koopmanAE, self).__init__()
         self.steps = steps
         self.steps_back = steps_back
 
         if simple:
-            self.encoder = encoderNetSimple(alpha = alpha, b=b)
-            self.decoder = decoderNetSimple(alpha = alpha, b=b)
+            self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+            self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
         else:
             self.encoder = encoderNet(alpha = alpha, b=b)
             self.decoder = decoderNet(alpha = alpha, b=b)
