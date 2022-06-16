@@ -4,11 +4,15 @@ import torch.nn.functional as F
 from data_synthesis import *
 
 def gaussian_init_(n_units, std=1):    
+    print("In Gaussian init")
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
-    Omega = sampler.sample((n_units, n_units))[..., 0]  
+    Omega = sampler.sample((n_units, n_units))[..., 0]
+    w, v = np.linalg.eig(Omega.cpu().detach().numpy())
+    print(w)
     return Omega
 
 def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
+    print("In eigen initialisation")
     # Orthogoonal matrices
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
     Omega = sampler.sample((n_units, n_units))[..., 0]  
@@ -24,6 +28,8 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
         w.real = np.random.normal(loc=1, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
         w.imag = np.random.normal(loc=0, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
     
+
+    print(w)
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):

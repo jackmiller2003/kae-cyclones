@@ -46,7 +46,7 @@ parser.add_argument('--learning_rate', type=float, default='1e-3', help='learnin
 #
 parser.add_argument('--weight_decay', type=float, default='0.01', help='learning rate')
 #
-parser.add_argument('--eigen_init', type=bool, default='True', help='initialise eigenvalues close to unit circle')
+parser.add_argument('--eigen_init', type=str, default='True', help='initialise eigenvalues close to unit circle')
 #
 parser.add_argument('--eigen_init_maxmin', type=float, default='2', help='maxmin value for uniform distribution')
 #
@@ -222,7 +222,13 @@ if __name__ == '__main__':
 
             print(train_ds[0])
 
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=args.eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
+        if args.eigen_init == 'True':
+            eigen_init = True
+        else:
+            eigen_init = False
+
+        print(f'eigen init {eigen_init}')
+        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
