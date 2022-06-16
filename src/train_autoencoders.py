@@ -55,6 +55,8 @@ parser.add_argument('--experiment_name', type=str, default='', help='experiment 
 parser.add_argument('--dataset', type=str, default='cyclone', help='dataset')
 #
 parser.add_argument('--init_distribution', type=str, default='uniform', help='eigenvalue initialisation distribution')
+#
+parser.add_argument('--dissipative_pendulum_level', type=int, default='0', help='level of pendulum dissipative element')
 
 args = parser.parse_args()
 
@@ -214,13 +216,11 @@ if __name__ == '__main__':
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             input_size = 400
         elif args.dataset == 'pendulum':
-            train_ds, val_ds, test_ds = dataset_generation.pendulum_to_ds(4, args.batch_size)
+            train_ds, val_ds, test_ds = generate_pendulum_ds(args.dissipative_pendulum_level)
 
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             input_size = 64
-
-            print(train_ds[0])
 
         if args.eigen_init == 'True':
             eigen_init = True

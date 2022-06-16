@@ -33,7 +33,7 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
-    def __init__(self, alpha, b, input_size=64):
+    def __init__(self, alpha, b, input_size=2):
         super(encoderNetSimple, self).__init__()
         self.input_size = input_size
 
@@ -114,7 +114,7 @@ class encoderNet(nn.Module):
         return x
 
 class decoderNetSimple(nn.Module):
-    def __init__(self, alpha, b, input_size=64):
+    def __init__(self, alpha, b, input_size=2):
         super(decoderNetSimple, self).__init__()
         self.b = b
 
@@ -142,7 +142,7 @@ class decoderNetSimple(nn.Module):
         if self.input_size == 400:
             return x.view(-1, 1, 20, 20)
         else:
-            return x.view(-1, 1, 64)
+            return x.view(-1, 1, self.input_size)
 
 class decoderNet(nn.Module):
     def __init__(self, alpha, b):
