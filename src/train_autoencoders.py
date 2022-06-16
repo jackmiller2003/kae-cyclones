@@ -1,5 +1,6 @@
 from datasets import *
 from models import *
+import dl_pipeline
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn
@@ -10,10 +11,11 @@ import logging
 from wandb import wandb
 import os
 from pathlib import Path
+import dataset_generation
 
 os.environ["WANDB_MODE"] = "offline"
 
-logging.basicConfig(level=logging.DEBUG, filename='log-ae.txt')
+logging.basicConfig(level=logging.DEBUG, filename='log-ae-3.txt')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
 
@@ -43,8 +45,21 @@ parser.add_argument('--alpha', type=float, default='10', help='eigen factor')
 parser.add_argument('--learning_rate', type=float, default='1e-3', help='learning rate')
 #
 parser.add_argument('--weight_decay', type=float, default='0.01', help='learning rate')
+#
+parser.add_argument('--eigen_init', type=str, default='True', help='initialise eigenvalues close to unit circle')
+#
+parser.add_argument('--eigen_init_maxmin', type=float, default='2', help='maxmin value for uniform distribution')
+#
+parser.add_argument('--experiment_name', type=str, default='', help='experiment name')
+#
+parser.add_argument('--dataset', type=str, default='cyclone', help='dataset')
+#
+parser.add_argument('--init_distribution', type=str, default='uniform', help='eigenvalue initialisation distribution')
 
 args = parser.parse_args()
+
+if args.experiment_name == '':
+    args.experiment_name = f"experiment_{args.model}_{args.loss_terms}"
 
 def train(model, device, train_loader, val_loader, train_size, val_size):
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
@@ -57,15 +72,15 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
       # Set the project where this run will be logged
       project="Koopman-autoencoders", 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-      name=f"experiment_{args.model}_{args.loss_terms}", 
+      name=f"{args.experiment_name}-{args.dataset}", 
+      dir=wandb_dir,
       # Track hyperparameters and run metadata
       config={
       "learning_rate": args.learning_rate,
       "architecture": args.model,
-      "dataset": "Sub-sampled cyclone dataset",
+      "dataset": args.dataset,
       "epochs": args.num_epochs,
       "weight_decay": args.weight_decay,
-      dir=wandb_dir
       })
     
     print(wandb.run.settings.mode)
@@ -127,6 +142,9 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
                 cfwd += loss_fwd
 
                 if args.loss_terms == 'e':
+                    # How does torch backprop this?
+                    # You can write the same code in torch
+                    # eigvals give you back the eigenvalues
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
                     w_abs = np.max(np.absolute(w))
@@ -159,8 +177,18 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['bwd'].append(avg_bwd_loss/train_size)
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
-        
-        print("Logging wandb")
+
+        if epoch % 5 == 4:
+            forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
+
+            if epoch == 4:
+                loss_dict['fwd_val'] = [forward_val]
+            else:
+                loss_dict['fwd_val'].append(forward_val)
+            
+            wandb.log({'forward validation': forward_val})
+    
+        logging.info(loss_dict)
 
         wandb.log({
             'loss':avg_loss/train_size,
@@ -171,24 +199,41 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             'eigenvalue loss': avg_eigen_loss/train_size
         })
 
-        logging.info(loss_dict)
-    
-    torch.save(model.state_dict(), f'{saved_models_path}/dae-eigen-{avg_loss/train_size}.pt')
+        if epoch % 10 == 9:
+            torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-temp-{epoch}.pt')
+
+    torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
     
     return model, loss_dict
 
 if __name__ == '__main__':
     if args.model == 'dynamicKAE':
-        train_ds, val_ds, test_ds = generate_example_dataset()
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16).to(0)
+        if args.dataset == 'cyclone':
+            train_ds, val_ds, test_ds = generate_example_dataset()
+            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            input_size = 400
+        elif args.dataset == 'pendulum':
+            train_ds, val_ds, test_ds = dataset_generation.pendulum_to_ds(4, args.batch_size)
+
+            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            input_size = 64
+
+            print(train_ds[0])
+
+        if args.eigen_init == 'True':
+            eigen_init = True
+        else:
+            eigen_init = False
+
+        print(f'eigen init {eigen_init}')
+        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
             logging.info(f"Loading model: {args.pre_trained}")
             model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
-
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
 
         logging.info("Training DAE")
         train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds))
