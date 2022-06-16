@@ -1,132 +1,40 @@
-# Copied from https://github.com/erichson/koopmanAE/blob/master/read_dataset.py
-
-import numpy as np
-from scipy.io import loadmat
+import scipy
 import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+import math
+import numpy as np
+import argparse
 
-from matplotlib import pylab as plt
-from scipy.special import ellipj, ellipk
+# TRAINING ARGUMENTS
+parser = argparse.ArgumentParser(description='Autoencoder Prediction')
+#
+parser.add_argument('--c_domain', type=float, default='2', help='domain of c values')
+#
+parser.add_argument('--c_points', type=int, default='5', help='number of points in c domain')
 
-import torch
+args = parser.parse_args()
 
-#******************************************************************************
-# Read in data
-#******************************************************************************
-def data_from_name(name, noise = 0.0, theta=2.4):
-    if name == 'pendulum_lin':
-        return pendulum_lin(noise)      
-    if name == 'pendulum':
-        return pendulum(noise, theta)    
-    else:
-        raise ValueError('dataset {} not recognized'.format(name))
+def simple_pendulum_deriv(x, t, m, g, l, F, c, omega): 
+# The simple pendulum subject to zero damping and zero control input 
+    nx = np.zeros(2)
+    nx[0] = x[1]
+    nx[1] = (1/m) * (F * math.sin(omega * t) - (m * g / l) * x[0] - c * nx[0])
+    return nx
 
+c_array = np.linspace(0, args.c_domain, args.c_points)
 
-def rescale(Xsmall, Xsmall_test):
-    #******************************************************************************
-    # Rescale data
-    #******************************************************************************
-    Xmin = Xsmall.min()
-    Xmax = Xsmall.max()
+def generate_dissipative_sets_for_pendulum(c_array):
+    sols = []
+    for c in c_array:
+        part_c = []
+        for start_pos in np.linspace(-math.pi,math.pi,100):
+            for start_vel in np.linspace(-1,1, 100):
+                sol = odeint(simple_pendulum_deriv, y0=[start_pos,start_vel], t=t_span, args=(1,9.8,1,0.6,c,1))
+                part_c.append(sol)
+        
+        sols.append(part_c)
     
-    Xsmall = ((Xsmall - Xmin) / (Xmax - Xmin)) 
-    Xsmall_test = ((Xsmall_test - Xmin) / (Xmax - Xmin)) 
-
-    return Xsmall, Xsmall_test
-
-def pendulum_lin(noise):
+    sols_array = np.array(sols)
+    np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative-{args.c_domain}-{args.c_points}', sols_array)
     
-    np.random.seed(0)
-
-    def sol(t,theta0):
-        S = np.sin(0.5*(theta0) )
-        K_S = ellipk(S**2)
-        omega_0 = np.sqrt(9.81)
-        sn,cn,dn,ph = ellipj( K_S - omega_0*t, S**2 )
-        theta = 2.0*np.arcsin( S*sn )
-        d_sn_du = cn*dn
-        d_sn_dt = -omega_0 * d_sn_du
-        d_theta_dt = 2.0*S*d_sn_dt / np.sqrt(1.0-(S*sn)**2)
-        return np.stack([theta, d_theta_dt],axis=1)
-    
-    
-    anal_ts = np.arange(0, 2200*0.1, 0.1)
-    
-    X = sol(anal_ts, 0.8)
-    
-    X = X.T
-    Xclean = X.copy()
-    X += np.random.standard_normal(X.shape) * noise
-    
- 
-    # Rotate to high-dimensional space
-    Q = np.random.standard_normal((64,2))
-    Q,_ = np.linalg.qr(Q)
-    
-    X = X.T.dot(Q.T) # rotate   
-    Xclean = Xclean.T.dot(Q.T)     
-    
-    # scale 
-    X = 2 * (X - np.min(X)) / np.ptp(X) - 1
-    Xclean = 2 * (Xclean - np.min(Xclean)) / np.ptp(Xclean) - 1
-
-    
-    # split into train and test set 
-    X_train = X[0:600]   
-    X_test = X[600:]
-
-    X_train_clean = Xclean[0:600]   
-    X_test_clean = Xclean[600:]    
-    
-    #******************************************************************************
-    # Return train and test set
-    #******************************************************************************
-    return X_train, X_test, X_train_clean, X_test_clean, 64, 1
-
-
-def pendulum(noise, theta=2.4):
-    
-    np.random.seed(1)
-
-    def sol(t,theta0):
-        S = np.sin(0.5*(theta0) )
-        K_S = ellipk(S**2)
-        omega_0 = np.sqrt(9.81)
-        sn,cn,dn,ph = ellipj( K_S - omega_0*t, S**2 )
-        theta = 2.0*np.arcsin( S*sn )
-        d_sn_du = cn*dn
-        d_sn_dt = -omega_0 * d_sn_du
-        d_theta_dt = 2.0*S*d_sn_dt / np.sqrt(1.0-(S*sn)**2)
-        return np.stack([theta, d_theta_dt],axis=1)
-    
-    
-    anal_ts = np.arange(0, 2200*0.1, 0.1)
-    X = sol(anal_ts, theta)
-    
-    X = X.T
-    Xclean = X.copy()
-    X += np.random.standard_normal(X.shape) * noise
-    
-    
-    # Rotate to high-dimensional space
-    Q = np.random.standard_normal((64,2))
-    Q,_ = np.linalg.qr(Q)
-    
-    X = X.T.dot(Q.T) # rotate
-    Xclean = Xclean.T.dot(Q.T)
-    
-    # scale 
-    X = 2 * (X - np.min(X)) / np.ptp(X) - 1
-    Xclean = 2 * (Xclean - np.min(Xclean)) / np.ptp(Xclean) - 1
-
-    
-    # split into train and test set 
-    X_train = X[0:600]   
-    X_test = X[600:]
-
-    X_train_clean = Xclean[0:600]   
-    X_test_clean = Xclean[600:]     
-    
-    #******************************************************************************
-    # Return train and test set
-    #******************************************************************************
-    return X_train, X_test, X_train_clean, X_test_clean, 64, 1
+    return sols_array

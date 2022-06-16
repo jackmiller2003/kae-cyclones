@@ -222,7 +222,7 @@ if __name__ == '__main__':
 
             print(train_ds[0])
 
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=True, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
+        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=args.eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
