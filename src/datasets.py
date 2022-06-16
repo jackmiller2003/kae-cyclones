@@ -186,7 +186,7 @@ class PendulumToPendulum(Dataset):
             j = self.prediction_length
             for time_step in pend_run[self.prediction_length:-self.prediction_length]:
                 if i == idx:
-                    return pend_run[j-self.prediction_length:j+self.prediction_length]
+                    return torch.from_numpy(pend_run[j-self.prediction_length:j+self.prediction_length]), torch.from_numpy(np.flip(pend_run[j-self.prediction_length:j+self.prediction_length], 0).copy())
                 j += 1
                 i += 1
 

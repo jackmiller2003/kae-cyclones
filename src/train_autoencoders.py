@@ -63,8 +63,8 @@ args = parser.parse_args()
 if args.experiment_name == '':
     args.experiment_name = f"experiment_{args.model}_{args.loss_terms}"
 
-def train(model, device, train_loader, val_loader, train_size, val_size):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate):
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.train()
     
@@ -215,12 +215,22 @@ if __name__ == '__main__':
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             input_size = 400
+
+            alpha = 16
+            beta = 16
+
+            learning_rate = 1e-3
         elif args.dataset == 'pendulum':
             train_ds, val_ds, test_ds = generate_pendulum_ds(args.dissipative_pendulum_level)
 
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-            input_size = 64
+            input_size = 2
+
+            alpha = 4
+            beta = 4
+
+            learning_rate = 1e-5
 
         if args.eigen_init == 'True':
             eigen_init = True
@@ -228,7 +238,7 @@ if __name__ == '__main__':
             eigen_init = False
 
         print(f'eigen init {eigen_init}')
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
+        model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
@@ -236,4 +246,4 @@ if __name__ == '__main__':
             model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
 
         logging.info("Training DAE")
-        train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds))
+        train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate)
