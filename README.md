@@ -91,6 +91,9 @@ Plots for each experiment (obviously won't all be included in paper). Most of th
 3. Spectral radius plot in Argand plane.
 4. Table of final metrics for each task (i.e. MSE for all four techniques combinations).
 
+## Questions
+1. Are we sure that we don't need a formulation of the eigenvalue loss that enables the calculation of derivatives for back-propagation? Are we sure that Pytorch handles this automatically for us?
+
 ___
 ## References
 * [Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
