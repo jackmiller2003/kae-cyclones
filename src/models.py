@@ -21,12 +21,13 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
     if distribution == 'uniform':
         w.real = np.random.uniform(-maxmin,maxmin, w.shape[0])
         w.imag = np.random.uniform(-maxmin,maxmin, w.shape[0])
-    elif distrbution == 'gaussian':
-        w.real = np.random.normal(loc=0, std=std, size=w.shape[0])
-        w.imag = np.random.normal(loc=0, std=std, size=w.shape[0])
-    elif distrbution == 'double-gaussian':
-        w.real = np.random.normal(loc=1, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
-        w.imag = np.random.normal(loc=0, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
+    elif distribution == 'gaussian':
+        print("In gaussian")
+        w.real = np.random.normal(loc=0, scale=std, size=w.shape[0])
+        w.imag = np.random.normal(loc=0, scale=std, size=w.shape[0])
+    elif distribution == 'double-gaussian':
+        w.real = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
+        w.imag = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
     
 
     print(w)
@@ -206,7 +207,7 @@ class dynamics(nn.Module):
         self.dynamics = nn.Linear(b, b, bias=False)
 
         if eigen_init:
-            self.dynamics.weight.data = eigen_init_(b, std=1, maxmin=maxmin)
+            self.dynamics.weight.data = eigen_init_(b, distribution=eigen_distribution, std=1, maxmin=maxmin)
         else:
             self.dynamics.weight.data = gaussian_init_(b, std=1)           
             U, _, V = torch.svd(self.dynamics.weight.data)
