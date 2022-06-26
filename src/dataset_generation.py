@@ -20,7 +20,7 @@ def generate_dissipative_sets_for_pendulum(c_array):
         part_c = []
         for start_pos in np.linspace(-math.pi,math.pi,100):
             for start_vel in np.linspace(-1,1, 100):
-                sol = odeint(simple_pendulum_deriv, y0=[start_pos,start_vel], t=t_span, args=(1,9.8,1,0.6,0.5+c,1))
+                sol = odeint(simple_pendulum_deriv, y0=[start_pos,start_vel], t=t_span, args=(1,9.8,1,1,0.6+c,1))
                 part_c.append(sol)
         
         sols.append(part_c)

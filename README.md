@@ -85,6 +85,15 @@ Tests to run:
 5. Fashion MNIST
   - 2x2 matrix init, no init etc.
 
+Plots for each experiment (obviously won't all be included in paper). Most of these will be for four combinations: just Koopman AE, eigeninit, eigenloss, and both together. Will also include PCA init for Fashion-MNIST.
+1. Forward loss (could be either validation or otherwise). Just need to show the smoother loss convergence with eigeninit and eigenloss.
+2. Eigenloss, for all methods (i.e. even no eigenloss penalty for backprop will still likely decrease eigenloss).
+3. Spectral radius plot in Argand plane.
+4. Table of final metrics for each task (i.e. MSE for all four techniques combinations).
+
+## Questions
+1. Are we sure that we don't need a formulation of the eigenvalue loss that enables the calculation of derivatives for back-propagation? Are we sure that Pytorch handles this automatically for us?
+
 ___
 ## References
 * [Forecasting Sequential Data Using Consistent Koopman Autoencoders](http://proceedings.mlr.press/v119/azencot20a/azencot20a.pdf).
