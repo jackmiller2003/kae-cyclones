@@ -1,0 +1,4 @@
+name: analysis3-22.01
+channels:
+  - defaults
+prefix: /home/156/cn1951/.conda/envs/analysis3-22.01

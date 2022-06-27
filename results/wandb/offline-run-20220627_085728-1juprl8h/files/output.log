@@ -1,0 +1,35 @@
+offline
+0. 1596.8910973911118
+Fwd loss: [0.20113869697645287]
+Back loss: [1594.9581571343997]
+Iden loss: [0.20746678840498878]
+Cons loss: [1.5243273874705805]
+0. 902.4490474316088
+Fwd loss: [0.14227170868842118]
+Back loss: [900.6923225661756]
+Iden loss: [0.1408506915714507]
+Cons loss: [1.4736054956497342]
+332it [07:12,  1.30s/it]
+332it [06:54,  1.25s/it]
+332it [06:40,  1.21s/it]
+332it [07:10,  1.30s/it]
+332it [07:17,  1.32s/it]
+ 26%|███████████████                                            | 43/168.046875 [00:37<01:49,  1.14it/s]
+332it [06:36,  1.19s/it]
+332it [06:24,  1.16s/it]
+332it [06:24,  1.16s/it]
+332it [06:24,  1.16s/it]
+332it [06:23,  1.16s/it]
+ 26%|███████████████                                            | 43/168.046875 [00:34<01:39,  1.26it/s]
+Traceback (most recent call last):
+  File "/home/156/cn1951/kae-cyclones/src/train_autoencoders.py", line 249, in <module>
+    train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate)
+  File "/home/156/cn1951/kae-cyclones/src/train_autoencoders.py", line 205, in train
+    torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-temp-{epoch}.pt')
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/serialization.py", line 376, in save
+    with _open_file_like(f, 'wb') as opened_file:
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/serialization.py", line 230, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/serialization.py", line 211, in __init__
+    super(_open_file, self).__init__(open(name, mode))
+PermissionError: [Errno 13] Permission denied: '/home/156/jm0124/kae-cyclones/saved_models/ELEI-uniform_init_cyclone-temp-9.pt'
