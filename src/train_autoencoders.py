@@ -55,14 +55,18 @@ parser.add_argument('--experiment_name', type=str, default='', help='experiment 
 parser.add_argument('--dataset', type=str, default='cyclone', help='dataset')
 #
 parser.add_argument('--init_distribution', type=str, default='uniform', help='eigenvalue initialisation distribution')
+#
+parser.add_argument('--dissipative_pendulum_level', type=int, default='0', help='level of pendulum dissipative element')
+#
+parser.add_argument('--eigenvalue_penalty_type', type=str, default='max', help='type of penalty (max, average and inverse)')
 
 args = parser.parse_args()
 
 if args.experiment_name == '':
     args.experiment_name = f"experiment_{args.model}_{args.loss_terms}"
 
-def train(model, device, train_loader, val_loader, train_size, val_size):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate):
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.train()
     
@@ -142,14 +146,22 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
                 cfwd += loss_fwd
 
                 if args.loss_terms == 'e':
+                    
                     # How does torch backprop this?
                     # You can write the same code in torch
                     # eigvals give you back the eigenvalues
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
-                    w_abs = np.max(np.absolute(w))
-                    closs += args.alpha * w_abs
-                    ceigen += args.alpha * w_abs
+                    if args.eigenvalue_penalty_type == 'max':
+                        w_pen = np.max(np.absolute(w))
+                    elif args.eigenvalue_penalty_type == 'average':
+                        w_pen = np.average(np.absolute(w))
+                    elif args.eigenvalue_penalty_type == 'inverse':
+                        w_pen = 1/np.min(np.absolute(w))
+                    elif args.eigenvalue_penalty_type == 'unit_circle':
+                        w_pen = np.sum(np.absolute(np.diff(1, w)))
+                    closs += args.alpha * w_pen
+                    ceigen += args.alpha * w_pen
         
             optimizer.zero_grad(set_to_none=True)
             closs.backward()
@@ -178,15 +190,14 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
 
-        if epoch % 5 == 4:
-            forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
+        forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
 
-            if epoch == 4:
-                loss_dict['fwd_val'] = [forward_val]
-            else:
-                loss_dict['fwd_val'].append(forward_val)
-            
-            wandb.log({'forward validation': forward_val})
+        if epoch == 0:
+            loss_dict['fwd_val'] = [forward_val]
+        else:
+            loss_dict['fwd_val'].append(forward_val)
+        
+        wandb.log({'forward validation': forward_val})
     
         logging.info(loss_dict)
 
@@ -199,10 +210,10 @@ def train(model, device, train_loader, val_loader, train_size, val_size):
             'eigenvalue loss': avg_eigen_loss/train_size
         })
 
-        if epoch % 10 == 9:
-            torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-temp-{epoch}.pt')
+        #if epoch % 10 == 9:
+            #torch.save(model.state_dict(), f'{saved_models_path}/{args.experiment_name}-temp-{epoch}.pt')
 
-    torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
+    #torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
     
     return model, loss_dict
 
@@ -213,14 +224,22 @@ if __name__ == '__main__':
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             input_size = 400
+
+            alpha = 16
+            beta = 16
+
+            learning_rate = 1e-3
         elif args.dataset == 'pendulum':
-            train_ds, val_ds, test_ds = dataset_generation.pendulum_to_ds(4, args.batch_size)
+            train_ds, val_ds, test_ds = generate_pendulum_ds(args.dissipative_pendulum_level)
 
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-            input_size = 64
+            input_size = 2
 
-            print(train_ds[0])
+            alpha = 4
+            beta = 4
+
+            learning_rate = 1e-5
 
         if args.eigen_init == 'True':
             eigen_init = True
@@ -228,7 +247,7 @@ if __name__ == '__main__':
             eigen_init = False
 
         print(f'eigen init {eigen_init}')
-        model_dae = koopmanAE(16, steps=4, steps_back=4, alpha=16, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
+        model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
             print(f"Loading model: {args.pre_trained}")
@@ -236,4 +255,4 @@ if __name__ == '__main__':
             model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
 
         logging.info("Training DAE")
-        train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds))
+        train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate)

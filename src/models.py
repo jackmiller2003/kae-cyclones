@@ -21,19 +21,20 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
     if distribution == 'uniform':
         w.real = np.random.uniform(-maxmin,maxmin, w.shape[0])
         w.imag = np.random.uniform(-maxmin,maxmin, w.shape[0])
-    elif distrbution == 'gaussian':
-        w.real = np.random.normal(loc=0, std=std, size=w.shape[0])
-        w.imag = np.random.normal(loc=0, std=std, size=w.shape[0])
-    elif distrbution == 'double-gaussian':
-        w.real = np.random.normal(loc=1, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
-        w.imag = np.random.normal(loc=0, std=std, size=w.shape[0]) + np.random.normal(loc=-1, std=std, size=w.shape[0])
+    elif distribution == 'gaussian':
+        print("In gaussian")
+        w.real = np.random.normal(loc=0, scale=std, size=w.shape[0])
+        w.imag = np.random.normal(loc=0, scale=std, size=w.shape[0])
+    elif distribution == 'double-gaussian':
+        w.real = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
+        w.imag = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
     
 
     print(w)
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
-    def __init__(self, alpha, b, input_size=64):
+    def __init__(self, alpha, b, input_size=2):
         super(encoderNetSimple, self).__init__()
         self.input_size = input_size
 
@@ -114,7 +115,7 @@ class encoderNet(nn.Module):
         return x
 
 class decoderNetSimple(nn.Module):
-    def __init__(self, alpha, b, input_size=64):
+    def __init__(self, alpha, b, input_size=2):
         super(decoderNetSimple, self).__init__()
         self.b = b
 
@@ -142,7 +143,7 @@ class decoderNetSimple(nn.Module):
         if self.input_size == 400:
             return x.view(-1, 1, 20, 20)
         else:
-            return x.view(-1, 1, 64)
+            return x.view(-1, 1, self.input_size)
 
 class decoderNet(nn.Module):
     def __init__(self, alpha, b):
@@ -206,7 +207,7 @@ class dynamics(nn.Module):
         self.dynamics = nn.Linear(b, b, bias=False)
 
         if eigen_init:
-            self.dynamics.weight.data = eigen_init_(b, std=1, maxmin=maxmin)
+            self.dynamics.weight.data = eigen_init_(b, distribution=eigen_distribution, std=1, maxmin=maxmin)
         else:
             self.dynamics.weight.data = gaussian_init_(b, std=1)           
             U, _, V = torch.svd(self.dynamics.weight.data)
