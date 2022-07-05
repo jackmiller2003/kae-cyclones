@@ -240,6 +240,15 @@ if __name__ == '__main__':
             beta = 4
 
             learning_rate = 1e-5
+            
+        elif args.dataset == 'ocean':
+            train_ds, val_ds, test_ds = generate_ocean_ds()
+            loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+            input_size = 2
+            alpha = 4
+            beta = 4
+            learning_rate = 1e-4
 
         if args.eigen_init == 'True':
             eigen_init = True
