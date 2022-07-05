@@ -332,3 +332,93 @@
 2022-06-03 19:51:06 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/conda-environment.yaml
 2022-06-03 19:51:06 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/requirements.txt
 2022-06-03 19:51:06 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/config.yaml
+2022-06-27 10:22:14 INFO open for scan: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/run-1e0jynh4.wandb
+2022-06-27 10:22:15 INFO watching files in: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files
+2022-06-27 10:22:15 INFO run started: 1e0jynh4 with start time 1654221776
+2022-06-27 10:22:15 INFO saving file wandb-metadata.json with policy now
+2022-06-27 10:22:15 INFO saving file wandb-summary.json with policy end
+2022-06-27 10:22:15 INFO handling exit code: 1
+2022-06-27 10:22:15 INFO handling runtime: 29442
+2022-06-27 10:22:15 INFO saving file wandb-summary.json with policy end
+2022-06-27 10:22:15 INFO send defer
+2022-06-27 10:22:15 INFO handle sender defer: 0
+2022-06-27 10:22:15 INFO send defer: 1
+2022-06-27 10:22:15 INFO handle sender defer: 1
+2022-06-27 10:22:15 INFO send defer: 2
+2022-06-27 10:22:15 INFO handle sender defer: 2
+2022-06-27 10:22:15 INFO send defer: 3
+2022-06-27 10:22:15 INFO handle sender defer: 3
+2022-06-27 10:22:15 INFO send defer: 4
+2022-06-27 10:22:15 INFO handle sender defer: 4
+2022-06-27 10:22:15 INFO send defer: 5
+2022-06-27 10:22:15 INFO handle sender defer: 5
+2022-06-27 10:22:15 INFO send defer: 6
+2022-06-27 10:22:15 INFO handle sender defer: 6
+2022-06-27 10:22:15 INFO shutting down directory watcher
+2022-06-27 10:22:16 INFO file/dir modified: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/config.yaml
+2022-06-27 10:22:16 INFO file/dir modified: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/wandb-summary.json
+2022-06-27 10:22:16 INFO scan: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files
+2022-06-27 10:22:16 INFO scan save: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/output.log output.log
+2022-06-27 10:22:16 INFO scan save: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/requirements.txt requirements.txt
+2022-06-27 10:22:16 INFO scan save: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/conda-environment.yaml conda-environment.yaml
+2022-06-27 10:22:16 INFO scan save: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/wandb-metadata.json wandb-metadata.json
+2022-06-27 10:22:16 INFO scan save: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/config.yaml config.yaml
+2022-06-27 10:22:16 INFO scan save: /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/wandb-summary.json wandb-summary.json
+2022-06-27 10:22:16 INFO send defer: 7
+2022-06-27 10:22:16 INFO handle sender defer: 7
+2022-06-27 10:22:16 INFO shutting down file pusher
+2022-06-27 10:22:16 INFO shutting down sender
+2022-06-27 10:22:16 INFO shutting down file pusher
+2022-06-27 10:22:16 INFO waiting for file pusher
+2022-06-27 10:22:16 INFO Uploaded file /scratch/g40/cn1951/tmp/tmpu6fwk90jwandb/yioa3rtp-wandb-metadata.json
+2022-06-27 10:22:16 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/config.yaml
+2022-06-27 10:22:16 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/requirements.txt
+2022-06-27 10:22:16 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/wandb-summary.json
+2022-06-27 10:22:16 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/conda-environment.yaml
+2022-06-27 10:22:17 INFO Uploaded file /home/156/cn1951/kae-cyclones/src/wandb/offline-run-20220603_120255-1e0jynh4/files/output.log
+2022-06-27 10:22:17 INFO send defer: 8
+2022-06-27 10:23:36 INFO open for scan: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/run-1juprl8h.wandb
+2022-06-27 10:23:36 INFO watching files in: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files
+2022-06-27 10:23:36 INFO run started: 1juprl8h with start time 1656284248
+2022-06-27 10:23:36 INFO saving file wandb-metadata.json with policy now
+2022-06-27 10:23:36 INFO saving file wandb-summary.json with policy end
+2022-06-27 10:23:36 INFO handling exit code: 1
+2022-06-27 10:23:36 INFO handling runtime: 4128
+2022-06-27 10:23:36 INFO saving file wandb-summary.json with policy end
+2022-06-27 10:23:36 INFO send defer
+2022-06-27 10:23:36 INFO handle sender defer: 0
+2022-06-27 10:23:36 INFO send defer: 1
+2022-06-27 10:23:36 INFO handle sender defer: 1
+2022-06-27 10:23:36 INFO send defer: 2
+2022-06-27 10:23:36 INFO handle sender defer: 2
+2022-06-27 10:23:36 INFO send defer: 3
+2022-06-27 10:23:36 INFO handle sender defer: 3
+2022-06-27 10:23:36 INFO send defer: 4
+2022-06-27 10:23:36 INFO handle sender defer: 4
+2022-06-27 10:23:36 INFO send defer: 5
+2022-06-27 10:23:36 INFO handle sender defer: 5
+2022-06-27 10:23:37 INFO send defer: 6
+2022-06-27 10:23:37 INFO handle sender defer: 6
+2022-06-27 10:23:37 INFO shutting down directory watcher
+2022-06-27 10:23:37 INFO Uploaded file /scratch/g40/cn1951/tmp/tmpm0ibjwuawandb/wfbsnezg-wandb-metadata.json
+2022-06-27 10:23:37 INFO file/dir modified: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/wandb-summary.json
+2022-06-27 10:23:37 INFO file/dir modified: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/config.yaml
+2022-06-27 10:23:37 INFO scan: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files
+2022-06-27 10:23:37 INFO scan save: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/output.log output.log
+2022-06-27 10:23:37 INFO scan save: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/requirements.txt requirements.txt
+2022-06-27 10:23:37 INFO scan save: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/conda-environment.yaml conda-environment.yaml
+2022-06-27 10:23:37 INFO scan save: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/wandb-metadata.json wandb-metadata.json
+2022-06-27 10:23:37 INFO scan save: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/wandb-summary.json wandb-summary.json
+2022-06-27 10:23:37 INFO scan save: /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/config.yaml config.yaml
+2022-06-27 10:23:37 INFO send defer: 7
+2022-06-27 10:23:37 INFO handle sender defer: 7
+2022-06-27 10:23:37 INFO shutting down file pusher
+2022-06-27 10:23:37 INFO shutting down sender
+2022-06-27 10:23:37 INFO shutting down file pusher
+2022-06-27 10:23:37 INFO waiting for file pusher
+2022-06-27 10:23:38 INFO Uploaded file /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/wandb-summary.json
+2022-06-27 10:23:38 INFO Uploaded file /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/config.yaml
+2022-06-27 10:23:38 INFO Uploaded file /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/requirements.txt
+2022-06-27 10:23:38 INFO Uploaded file /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/conda-environment.yaml
+2022-06-27 10:23:38 INFO Uploaded file /home/156/cn1951/kae-cyclones/results/wandb/offline-run-20220627_085728-1juprl8h/files/output.log
+2022-06-27 10:23:38 INFO send defer: 8

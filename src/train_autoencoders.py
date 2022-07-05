@@ -57,6 +57,8 @@ parser.add_argument('--dataset', type=str, default='cyclone', help='dataset')
 parser.add_argument('--init_distribution', type=str, default='uniform', help='eigenvalue initialisation distribution')
 #
 parser.add_argument('--dissipative_pendulum_level', type=int, default='0', help='level of pendulum dissipative element')
+#
+parser.add_argument('--eigenvalue_penalty_type', type=str, default='max', help='type of penalty (max, average and inverse)')
 
 args = parser.parse_args()
 
@@ -144,14 +146,22 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 cfwd += loss_fwd
 
                 if args.loss_terms == 'e':
+                    
                     # How does torch backprop this?
                     # You can write the same code in torch
                     # eigvals give you back the eigenvalues
                     A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                     w, v = np.linalg.eig(A)
-                    w_abs = np.max(np.absolute(w))
-                    closs += args.alpha * w_abs
-                    ceigen += args.alpha * w_abs
+                    if args.eigenvalue_penalty_type == 'max':
+                        w_pen = np.max(np.absolute(w))
+                    elif args.eigenvalue_penalty_type == 'average':
+                        w_pen = np.average(np.absolute(w))
+                    elif args.eigenvalue_penalty_type == 'inverse':
+                        w_pen = 1/np.min(np.absolute(w))
+                    elif args.eigenvalue_penalty_type == 'unit_circle':
+                        w_pen = np.sum(np.absolute(np.diff(1, w)))
+                    closs += args.alpha * w_pen
+                    ceigen += args.alpha * w_pen
         
             optimizer.zero_grad(set_to_none=True)
             closs.backward()
@@ -180,15 +190,14 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
 
-        if epoch % 5 == 4:
-            forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
+        forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
 
-            if epoch == 4:
-                loss_dict['fwd_val'] = [forward_val]
-            else:
-                loss_dict['fwd_val'].append(forward_val)
-            
-            wandb.log({'forward validation': forward_val})
+        if epoch == 0:
+            loss_dict['fwd_val'] = [forward_val]
+        else:
+            loss_dict['fwd_val'].append(forward_val)
+        
+        wandb.log({'forward validation': forward_val})
     
         logging.info(loss_dict)
 
@@ -201,10 +210,10 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             'eigenvalue loss': avg_eigen_loss/train_size
         })
 
-        if epoch % 10 == 9:
-            torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-temp-{epoch}.pt')
+        #if epoch % 10 == 9:
+            #torch.save(model.state_dict(), f'{saved_models_path}/{args.experiment_name}-temp-{epoch}.pt')
 
-    torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
+    #torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
     
     return model, loss_dict
 
