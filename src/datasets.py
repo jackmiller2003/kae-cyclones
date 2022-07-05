@@ -199,9 +199,6 @@ def generate_ocean_ds():
 
     return train_ds, val_ds, test_ds
 
-############################################################################
-# EXAMPLE CYCLONE
-############################################################################
 
 class PendulumToPendulum(Dataset):
     def __init__(self, prediction_length, dissipation_level, partition_name='train'):
@@ -284,4 +281,8 @@ def generate_numpy_dataset(prediction_length, atmospheric_values, pressure_level
         np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{prediction_length}/u/{pressure_levels[0]}/test/{cyclone}-{j}.npy', cyclone_array)
 
 if __name__ == '__main__':
-    generate_numpy_dataset(0, ['u'], [2])
+    train_ds, val_ds, test_ds = generate_pendulum_ds(0)
+    loader = torch.utils.data.DataLoader(train_ds, batch_size=64, num_workers=8, pin_memory=True, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_ds, batch_size=64, num_workers=8, pin_memory=True, shuffle=True)
+    img, output = next(iter(loader))
+    print(img.shape)

@@ -16,7 +16,12 @@ import dataset_generation
 os.environ["WANDB_MODE"] = "offline"
 
 logging.basicConfig(level=logging.DEBUG, filename='log-ae-3.txt')
-saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
+direct = os.getcwd()
+if direct[10:16] == 'jm0124':
+    saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
+else:
+    saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
+print(f"Saved models path: {saved_models_path}")
 wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
 
 # TRAINING ARGUMENTS
@@ -44,7 +49,7 @@ parser.add_argument('--alpha', type=float, default='10', help='eigen factor')
 #
 parser.add_argument('--learning_rate', type=float, default='1e-3', help='learning rate')
 #
-parser.add_argument('--weight_decay', type=float, default='0.01', help='learning rate')
+parser.add_argument('--weight_decay', type=float, default='0.01', help='weight decay')
 #
 parser.add_argument('--eigen_init', type=str, default='True', help='initialise eigenvalues close to unit circle')
 #
@@ -71,10 +76,17 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     model.train()
     
     loss_dict = {}
+    
+    if args.dataset == "cyclone":
+        project_wandb = "Koopman-autoencoders"
+    elif args.dataset == "ocean":
+        project_wandb = "ocean"
+    elif args.dataset == "pendulum":
+        project_wandb = "pendulum"
 
     wandb.init(
       # Set the project where this run will be logged
-      project="Koopman-autoencoders", 
+      project=project_wandb, 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
       name=f"{args.experiment_name}-{args.dataset}", 
       dir=wandb_dir,
@@ -245,9 +257,9 @@ if __name__ == '__main__':
             train_ds, val_ds, test_ds = generate_ocean_ds()
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-            input_size = 2
-            alpha = 4
-            beta = 4
+            input_size = 150
+            alpha = 16
+            beta = 16
             learning_rate = 1e-4
 
         if args.eigen_init == 'True':

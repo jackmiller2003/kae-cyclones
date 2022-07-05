@@ -1,0 +1,17 @@
+
+offline
+  0%|                                                                                                              | 0/2 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/156/cn1951/kae-cyclones/src/train_autoencoders.py", line 267, in <module>
+    train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate)
+  File "/home/156/cn1951/kae-cyclones/src/train_autoencoders.py", line 102, in train
+    out, out_back = model(x=cyclone_array[0].unsqueeze(0), mode='forward')
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/156/cn1951/kae-cyclones/src/models.py", line 251, in forward
+    z = self.encoder(x.contiguous())
+  File "/apps/pytorch/1.10.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1102, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/156/cn1951/kae-cyclones/src/models.py", line 55, in forward
+    x = x.view(-1, self.input_size)
+RuntimeError: shape '[-1, 400]' is invalid for input of size 150

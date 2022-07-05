@@ -71,10 +71,15 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     model.train()
     
     loss_dict = {}
+    
+    if args.dataset == "cyclone":
+        project_wandb = "Koopman-autoencoders"
+    elif args.dataset == "ocean":
+        project_wandb = "ocean"
 
     wandb.init(
       # Set the project where this run will be logged
-      project="Koopman-autoencoders", 
+      project=project_wandb, 
       # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
       name=f"{args.experiment_name}-{args.dataset}", 
       dir=wandb_dir,
@@ -245,9 +250,9 @@ if __name__ == '__main__':
             train_ds, val_ds, test_ds = generate_ocean_ds()
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-            input_size = 2
-            alpha = 4
-            beta = 4
+            input_size = 150
+            alpha = 16
+            beta = 16
             learning_rate = 1e-4
 
         if args.eigen_init == 'True':
