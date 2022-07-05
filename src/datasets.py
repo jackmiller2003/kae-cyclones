@@ -197,6 +197,7 @@ def generate_pendulum_ds(dissipation_level):
 
     return train_ds, val_ds, test_ds
 
+<<<<<<< HEAD
 ############################################################################
 # OCEAN
 ############################################################################
@@ -231,6 +232,8 @@ def generate_ocean_ds():
 ############################################################################
 
 
+=======
+>>>>>>> 756b46a537f4b97e05b361a4a11eb45ccd500c23
 def generate_example_dataset():
     """
     cyclone_dir, json_path, prediction_length, atmospheric_values, pressure_levels,
