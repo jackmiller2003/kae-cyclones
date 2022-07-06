@@ -276,4 +276,6 @@ if __name__ == '__main__':
             model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
 
         logging.info("Training DAE")
+        total_params = sum(p.numel() for p in model_dae.parameters() if p.requires_grad)
+        print(f"Total model parameters = {total_params}")
         train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate)
