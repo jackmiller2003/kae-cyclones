@@ -225,7 +225,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
         #if epoch % 10 == 9:
             #torch.save(model.state_dict(), f'{saved_models_path}/{args.experiment_name}-temp-{epoch}.pt')
 
-    #torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
+    torch.save(model.state_dict(), f'{saved_models_path}/ELEI-{args.experiment_name}-final.pt')
     
     return model, loss_dict
 
@@ -267,7 +267,6 @@ if __name__ == '__main__':
         else:
             eigen_init = False
 
-        print(f'eigen init {eigen_init}')
         model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
 
         if not (args.pre_trained == ''):
