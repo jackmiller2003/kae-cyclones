@@ -9,6 +9,7 @@ import xarray
 from pathlib import Path
 import dask
 from tqdm import tqdm
+import scipy.io
 
 train_json_path = '/g/data/x77/ob2720/partition/train.json'
 valid_json_path = '/g/data/x77/ob2720/partition/valid.json'
@@ -199,6 +200,28 @@ def generate_ocean_ds():
 
     return train_ds, val_ds, test_ds
 
+class FluidToFluid(Dataset):
+
+    def __init__(self, prediction_length, partition_name='train', fluid_val):
+        self.fluid_array = np.load(f'/g/data/x77/jm0124/fluids/{partition_name}_{fluid_val}.npy')
+        self.prediction_length = prediction_length
+    
+    def __len__(self):
+        return self.fluid_array.shape[0] - 2*self.prediction_length
+    
+    def __getitem__(self,idx):
+        j = self.prediction_length
+        for i in range(0,self.fluid_array.shape[0] - 2*self.prediction_length):
+            if i == idx:
+                return torch.from_numpy(self.fluid_array[j-self.prediction_length:j+self.prediction_length]), torch.from_numpy(np.flip(self.fluid_array[j-self.prediction_length:j+self.prediction_length], 0).copy())
+            j += 1
+
+def generate_fluid_u():
+    train_ds = FluidToFluid(4, 'train', 'u')
+    val_ds = FluidToFluid(4, 'valid', 'u')
+    test_ds = FluidToFluid(4, 'test', 'u')
+
+    return train_ds, val_ds, test_ds
 
 class PendulumToPendulum(Dataset):
     def __init__(self, prediction_length, dissipation_level, partition_name='train'):

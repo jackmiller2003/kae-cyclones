@@ -4,15 +4,12 @@ import torch.nn.functional as F
 from data_synthesis import *
 
 def gaussian_init_(n_units, std=1):    
-    print("In Gaussian init")
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
     Omega = sampler.sample((n_units, n_units))[..., 0]
     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
-    print(w)
     return Omega
 
 def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
-    print("In eigen initialisation")
     # Orthogoonal matrices
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
     Omega = sampler.sample((n_units, n_units))[..., 0]  
@@ -20,17 +17,22 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
 
     if distribution == 'uniform':
         w.real = np.random.uniform(-maxmin,maxmin, w.shape[0])
-        w.imag = np.random.uniform(-maxmin,maxmin, w.shape[0])
+        imag_dist = np.random.uniform(-maxmin,maxmin, w.shape[0])
+        w = w + imag_dist
+    elif distribution == 'uniform-small':
+        w.real = np.random.uniform(-1,1, w.shape[0])
+        imag_dist = np.random.uniform(-1,1, w.shape[0])
+        w = w + imag_dist
     elif distribution == 'gaussian':
         print("In gaussian")
         w.real = np.random.normal(loc=0, scale=std, size=w.shape[0])
-        w.imag = np.random.normal(loc=0, scale=std, size=w.shape[0])
+        imag_dist = np.random.normal(loc=0, scale=std, size=w.shape[0])
+        w = w + imag_dist
     elif distribution == 'double-gaussian':
         w.real = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
-        w.imag = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
+        imag_dist = np.random.normal(loc=1, scale=std, size=w.shape[0]) + np.random.normal(loc=-1, scale=std, size=w.shape[0])
+        w = w + imag_dist
     
-
-    print(w)
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
