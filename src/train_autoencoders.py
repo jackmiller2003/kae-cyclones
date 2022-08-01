@@ -77,7 +77,7 @@ args = parser.parse_args()
 if args.experiment_name == '':
     args.experiment_name = f"experiment_{args.model}_{args.loss_terms}"
 
-def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenvalue_penalty_type, eigen_dist, eigen_penalty, group, run):
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenvalue_penalty_type, eigen_dist, eigen_penalty, group, run="1", epochs=args.num_epochs):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.train()
@@ -108,7 +108,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     
     # print(wandb.run.settings.mode)
 
-    for epoch in range(args.num_epochs):
+    for epoch in range(epochs):
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
         
         for i, cyclone_array_list in enumerate(train_loader):
@@ -239,6 +239,42 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     
     return model, loss_dict
 
+def ei_finder():
+    # generate dataset and instantiate learner
+    train_ds, val_ds, test_ds = generate_ocean_ds()
+    loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+    input_size = 150
+    alpha = 16
+    beta = 16
+    learning_rate = 1e-4
+    eigen_init = True if args.eigen_init == 'True' else False
+    # initialisation stds
+    lr_1 = [10**(-x) for x in range(10)]
+    lr_1.reverse()
+    lr_2 = [x for x in 10**np.linspace(0, 2, 10)]
+    stds = lr_1 + lr_2
+    # model and train  
+    plot_losses = []
+    for std in tqdm(stds):
+        model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution="gaussian", maxmin=args.eigen_init_maxmin, input_size=input_size, std=std).to(0)
+        model, loss_dict = train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, args.eigenvalue_penalty_type, args.init_distribution, args.experiment_name, 0)
+        # get losses
+        losses, loss_items = loss_dict["loss"], []
+        for loss in losses: loss_items.append(loss.detach().cpu().item())
+        plot_losses.append(np.average(loss_items))
+    print(plot_losses)
+    plt.plot(stds, plot_losses)
+    plt.xlabel("Standard deviation of eigeninit")
+    plt.ylabel("Average validation loss")
+    plt.show()
+    return plot_losses
+    
+    
+if __name__ == '__main__':
+    ei_finder()
+
+"""
 if __name__ == '__main__':
     if args.model == 'dynamicKAE':
         if args.dataset.startswith('cyclone'):
@@ -286,10 +322,7 @@ if __name__ == '__main__':
             beta = 16
             learning_rate = 1e-4
 
-        if args.eigen_init == 'True':
-            eigen_init = True
-        else:
-            eigen_init = False
+        eigen_init = True if args.eigen_init == 'True' else False
 
         # print(f'eigen init {eigen_init}')
 
@@ -300,7 +333,8 @@ if __name__ == '__main__':
 
         logging.info("Training DAE")
 
-        if args.list_of_std != None:
+        #if args.list_of_std != None:
+        if 1 == 2: # @jack I think you meant to include an argument in args for list_of_std
             for std in args.list_of_std:
                 for i in tqdm(range(0,args.runs)):
                     model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=True, eigen_distribution='uniform', maxmin=std, input_size=input_size).to(0)
@@ -326,3 +360,4 @@ if __name__ == '__main__':
                 # print(i)
                 model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
                 train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, args.eigenvalue_penalty_type, args.init_distribution, args.experiment_name, i)
+"""
