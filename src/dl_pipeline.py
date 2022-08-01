@@ -168,7 +168,7 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
     
     return model, losses, fwd_loss, back_loss, iden_loss, cons_loss
 
-def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epochs=1, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=128, backward=1):
+def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epochs=1, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=16, backward=1):
     criterion = nn.MSELoss().to(device)
     model.eval()
     avg_loss = 0
@@ -179,17 +179,19 @@ def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epo
     cons_loss = []
     losses = []
 
-    for epoch in range(num_epochs):  
+    for epoch in range(num_epochs):
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss = 0, 0, 0, 0, 0      
         for i, cyclone_array_list in tqdm(enumerate(train_loader), total=ds_length/batch_size):
-            loss, cfwd, cbwd, ciden, ccons = 0, 0, 0, 0, 0
-                    
+            loss, cfwd, cbwd, ciden, ccons = 0, 0, 0, 0, 0                    
             if i == 0:
                 model.print_hidden = True
             if i != 0:
                 model.print_hidden = False
 
+            # print(f"Length of cyclone array list: {len(cyclone_array_list)}")
+
             for data in cyclone_array_list:
+                # print(f"Length of data {len(data)}")
                 cyclone_array = data[0].float() 
                 reversed_array = data[1].float()
                 cyclone_array = cyclone_array.to(device)

@@ -9,6 +9,7 @@ import xarray
 from pathlib import Path
 import dask
 from tqdm import tqdm
+import scipy.io
 
 train_json_path = '/g/data/x77/ob2720/partition/train.json'
 valid_json_path = '/g/data/x77/ob2720/partition/valid.json'
@@ -176,7 +177,8 @@ class CycloneDataset(Dataset):
 
 class OceanToOcean(Dataset):
     def __init__(self, prediction_length, partition_name='train'):
-        self.ocean_array = np.load(f"/home/156/cn1951/kae-cyclones/input/sstday_{partition_name}.npy")
+        # self.ocean_array = np.load(f"/home/156/cn1951/kae-cyclones/input/sstday_{partition_name}.npy")
+        self.ocean_array = np.load(f"/g/data/x77/jm0124/ocean/sstday_{partition_name}.npy")
         self.prediction_length = prediction_length
     
     def __len__(self):
@@ -199,6 +201,30 @@ def generate_ocean_ds():
 
     return train_ds, val_ds, test_ds
 
+class FluidToFluid(Dataset):
+
+    def __init__(self, prediction_length, partition_name='train', fluid_val='u'):
+        self.fluid_array = np.load(f'/g/data/x77/jm0124/fluids/{partition_name}_{fluid_val}.npy')
+        self.prediction_length = prediction_length
+    
+    def __len__(self):
+        return self.fluid_array.shape[0] - 2*self.prediction_length
+    
+    def __getitem__(self,idx):
+        j = self.prediction_length
+        for i in range(0,self.fluid_array.shape[0] - 2*self.prediction_length):
+            if i == idx:
+                array = self.fluid_array[j-self.prediction_length:j+self.prediction_length]
+                reverse_array = np.flip(self.fluid_array[j-self.prediction_length:j+self.prediction_length]).copy()
+                return torch.from_numpy(array), torch.from_numpy(reverse_array)
+            j += 1
+
+def generate_fluid_u():
+    train_ds = FluidToFluid(4, 'train', 'u')
+    val_ds = FluidToFluid(4, 'valid', 'u')
+    test_ds = FluidToFluid(4, 'test', 'u')
+
+    return train_ds, val_ds, test_ds
 
 class PendulumToPendulum(Dataset):
     def __init__(self, prediction_length, dissipation_level, partition_name='train'):
@@ -225,6 +251,24 @@ def generate_pendulum_ds(dissipation_level):
     test_ds = PendulumToPendulum(4, dissipation_level, 'test')
 
     return train_ds, val_ds, test_ds
+
+class LimitedDs(Dataset):
+    def __init__(self, other_ds, length):
+       self.ds = other_ds
+       self.length = length
+    
+    def __len__(self):
+        return self.length
+    
+    def __getitem__(self,idx):
+        return self.ds[idx]
+
+def generate_limited_cyclones():
+    train_ds, val_ds, test_ds = generate_example_dataset()
+
+    a = LimitedDs(other_ds=train_ds, length=1000)
+
+    return LimitedDs(other_ds=train_ds, length=1000), LimitedDs(other_ds=val_ds, length=1000), LimitedDs(other_ds=test_ds, length=1000)
 
 def generate_example_dataset():
     """
