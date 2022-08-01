@@ -1,1 +1,0 @@
-{"loss": 0.44774481654167175, "identity loss": 0.21493972837924957, "forward loss": 0.23280540108680725, "backward loss": 0.0, "consistency loss": 0.0, "eigenvalue loss": 0.0, "_timestamp": 1654181398, "_runtime": 17509, "_step": 49, "_wandb": {"runtime": 17508}}

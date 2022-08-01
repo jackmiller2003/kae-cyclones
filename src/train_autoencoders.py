@@ -241,8 +241,11 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
 
 if __name__ == '__main__':
     if args.model == 'dynamicKAE':
-        if args.dataset == 'cyclone':
-            train_ds, val_ds, test_ds = generate_example_dataset()
+        if args.dataset.startswith('cyclone'):
+            if args.dataset == 'cyclone':
+                train_ds, val_ds, test_ds = generate_example_dataset()
+            elif args.dataset == 'cyclone-limited':
+                train_ds, val_ds, test_ds = generate_limited_cyclones()
             loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
             input_size = 400
@@ -251,6 +254,8 @@ if __name__ == '__main__':
             beta = 16
 
             learning_rate = 1e-3
+
+        
         elif args.dataset == 'pendulum':
             train_ds, val_ds, test_ds = generate_pendulum_ds(args.dissipative_pendulum_level)
 
@@ -295,7 +300,12 @@ if __name__ == '__main__':
 
         logging.info("Training DAE")
 
-        if args.list_of_penalty != None:
+        if args.list_of_std != None:
+            for std in args.list_of_std:
+                for i in tqdm(range(0,args.runs)):
+                    model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=True, eigen_distribution='uniform', maxmin=std, input_size=input_size).to(0)
+                    train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, 'no-penalty', f'uniform-{std}', True, args.experiment_name, i)
+        elif args.list_of_penalty != None:
             for penalty in args.list_of_penalty:
                 for init in args.list_of_init:
                     for i in tqdm(range(0,args.runs)):
