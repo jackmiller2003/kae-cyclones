@@ -113,9 +113,9 @@ if __name__ == "__main__":
     # exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
     # exp.run()
 
-    expCol = ExperimentCollection('ocean', 'testRun2')
-    expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
+    expCol = ExperimentCollection('fluid', 'fluidsRun')
+    expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
-    expCol.run()
+    expCol.run(epochs=25, numRuns=10)
     print(expCol.collectionResults)
     expCol.saveResults()
