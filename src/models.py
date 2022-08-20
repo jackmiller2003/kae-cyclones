@@ -206,21 +206,11 @@ class decoderNet(nn.Module):
         return x
 
 class dynamics(nn.Module):
-    def __init__(self, b, init_scale, eigen_init=False, eigen_distribution='uniform', maxmin=2, std=1):
+    def __init__(self, b, init_scheme):
+    #def __init__(self, b, init_scale, eigen_init=False, eigen_distribution='uniform', maxmin=2, std=1):
         super(dynamics, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
-
-        if eigen_init:
-            self.dynamics.weight.data = eigen_init_(b, distribution=eigen_distribution, std=1, maxmin=maxmin)
-        else:
-<<<<<<< HEAD
-            self.dynamics.weight.data = gaussian_init_(b, std=1)
-=======
-            self.dynamics.weight.data = gaussian_init_(b, std=std)           
-            U, _, V = torch.svd(self.dynamics.weight.data)
-            self.dynamics.weight.data = torch.mm(U, V.t()) * init_scale
->>>>>>> 7a43e3ad26e8133a9d30e34db3ad1801e54e19f3
-    
+        self.dynamics.weight.data = init_scheme()
     def forward(self, x):
         x = self.dynamics(x)
         return x
@@ -236,15 +226,43 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
-<<<<<<< HEAD
-    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=1, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
-=======
-<<<<<<< HEAD
-    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=1, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400):
-=======
     def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
->>>>>>> 7a43e3ad26e8133a9d30e34db3ad1801e54e19f3
->>>>>>> 3366e2ff03371753e510c6bf7980a6c21aa771ff
+        super(koopmanAE, self).__init__()
+        self.steps = steps
+        self.steps_back = steps_back
+        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        
+        self.dynamics = dynamics(b, init_scale, eigen_init=eigen_init, maxmin=maxmin, eigen_distribution=eigen_distribution, std=std)
+        self.backdynamics = dynamics_back(b, self.dynamics)
+        self.print_hidden = print_hidden
+
+
+    def forward(self, x, mode='forward'):
+        out = []
+        out_back = []
+        z = self.encoder(x.contiguous())
+        q = z.contiguous()
+
+        
+        if mode == 'forward':
+            for _ in range(self.steps):
+                q = self.dynamics(q)
+                out.append(self.decoder(q))
+
+            out.append(self.decoder(z.contiguous())) 
+            return out, out_back    
+
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                q = self.backdynamics(q)
+                out_back.append(self.decoder(q))
+                
+            out_back.append(self.decoder(z.contiguous()))
+            return out, out_back
+
+class koopmanAE2(nn.Module):
+    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
         super(koopmanAE, self).__init__()
         self.steps = steps
         self.steps_back = steps_back
