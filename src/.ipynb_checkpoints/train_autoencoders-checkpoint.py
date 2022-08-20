@@ -271,10 +271,10 @@ def ei_finder():
     return plot_losses
     
     
-if __name__ == '__main__':
-    ei_finder()
+#if __name__ == '__main__':
+   # ei_finder()
 
-"""
+
 if __name__ == '__main__':
     if args.model == 'dynamicKAE':
         if args.dataset.startswith('cyclone'):
@@ -360,4 +360,3 @@ if __name__ == '__main__':
                 # print(i)
                 model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
                 train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, args.eigenvalue_penalty_type, args.init_distribution, args.experiment_name, i)
-"""

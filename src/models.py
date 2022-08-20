@@ -27,7 +27,6 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
         imag_dist = np.random.uniform(-1,1, w.shape[0])
         w = w + imag_dist
     elif distribution == 'gaussian':
-        print("In gaussian")
         w.real = np.random.normal(loc=0, scale=std, size=w.shape[0])
         imag_dist = np.random.normal(loc=0, scale=std, size=w.shape[0])
         w = w + imag_dist

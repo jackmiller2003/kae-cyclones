@@ -70,7 +70,3 @@ def getInitFunc(distributionName):
 def getLossFunc(lossName):
     if lossName == 'inverse':
         return lossLibrary.inverse
-
-if __name__ == '__main__':
-    init = InitScheme('gaussianElement', 1)
-    print(init())
