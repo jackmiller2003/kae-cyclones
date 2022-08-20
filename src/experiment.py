@@ -8,7 +8,7 @@ class ExperimentCollection:
         self.collectionResults = {}
         self.runRegime = {}
     
-    def run(self, epochs=10, numRuns=1, batchSize=64, **kwargs):        
+    def run(self, epochs=25, numRuns=10, batchSize=64, **kwargs):        
         for eigenLoss, eigenInits in self.runRegime.items():
             self.collectionResults[eigenLoss] = {}
             for eigenInit, stds in eigenInits.items():
