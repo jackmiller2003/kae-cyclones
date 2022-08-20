@@ -35,10 +35,6 @@ class Experiment:
         self.epochs = 50
     
     def run(self, epochs=50, batchSize=128):
-        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr = create_dataset(self.datasetName, batchSize)
-        init_scheme = InitScheme(self.eigenInit, self.std, beta)
-        model = koopmanAE(init_scheme, beta, alpha, input_size)
-        loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, self.epochs)
         return loss_dict
 
     def __str__(self):

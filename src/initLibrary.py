@@ -1,7 +1,6 @@
 import torch
 
 def gaussianElement(std, matrixSize):
-<<<<<<< HEAD
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/matrixSize]))
     Omega = sampler.sample((matrixSize, matrixSize))[..., 0]
     
@@ -27,8 +26,4 @@ def gaussianElement(std, matrixSize):
     w = w + np.zeros(w.shape[0], dtype=complex)
     w.imag = imag_dist
     
-=======
-    sampler = torch.distributions.Normal(torch.Tensor([0]), torch.tensor([std/matrixSize]))
-    Omega = sampler.sample((matrixSize, matrixSize))[..., 0]
->>>>>>> 31370088283d4686275eac24c6e8848aea7bcb86
     return Omega
