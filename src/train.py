@@ -1,6 +1,7 @@
 from datasets import *
 from models import *
 from tqdm import tqdm
+from dl_pipeline import *
 import matplotlib.pyplot as plt
 import seaborn
 import logging
@@ -20,9 +21,8 @@ if direct[10:16] == 'jm0124':
     saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 else:
     saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
-print(f"Saved models path: {saved_models_path}")
 
-def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, eigen_penalty, epochs):
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.train()
@@ -47,7 +47,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                     else:
                         loss_fwd += criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
 
-                loss_identity = criterion(out[-1], cyclone_array[0].unsqueeze(0).to(device)) * args.forward_steps
+                loss_identity = criterion(out[-1], cyclone_array[0].unsqueeze(0).to(device)) * model.steps
 
                 loss_bwd, loss_consist, loss_bwd, loss_consist = 0, 0, 0, 0
                     
@@ -95,7 +95,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
 
-        forward_val = dl_pipeline.eval_models(model, val_loader, val_size, koopman=True)[0][0]
+        forward_val = eval_models(model, val_loader, val_size, koopman=True)[0][0]
 
         if epoch == 0:
             loss_dict['fwd_val'] = [forward_val]
@@ -111,41 +111,41 @@ def create_model(alpha, beta, init_scheme, input_size):
     model_dae = koopmanAE(init_scheme, b=beta, alpha=alpha, input_size=input_size).to(0)
     return model_dae
 
-def create_dataset(dataset:str):
+def create_dataset(dataset:str, batch_size):
     "Build a dataset based on the problem type."
     if dataset.startswith('cyclone'):
         if dataset == 'cyclone': train_ds, val_ds, test_ds = generate_example_dataset()
         elif dataset == 'cyclone-limited':
             train_ds, val_ds, test_ds = generate_limited_cyclones()
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 400
         alpha = 16
         beta = 16
         learning_rate = 1e-3
 
-    elif args.dataset == 'pendulum':
+    elif dataset == 'pendulum':
         train_ds, val_ds, test_ds = generate_pendulum_ds(args.dissipative_pendulum_level)
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2
         alpha = 4
         beta = 4
         learning_rate = 1e-5
             
-    elif args.dataset == 'ocean':
+    elif dataset == 'ocean':
         train_ds, val_ds, test_ds = generate_ocean_ds()
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 150
         alpha = 16
         beta = 16
         learning_rate = 1e-4
         
-    elif args.dataset == 'fluid':
+    elif dataset == 'fluid':
         train_ds, val_ds, test_ds = generate_fluid_u()
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=args.batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 89351
         alpha = 64
         beta = 16

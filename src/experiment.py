@@ -1,4 +1,4 @@
-import initLibrary, lossLibrary
+import initLibrary
 from train import *
 
 class ExperimentCollection:
@@ -35,11 +35,10 @@ class Experiment:
         self.epochs = 50
     
     def run(self, epochs=50, batchSize=128):
-        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr = create_dataset(self.datasetName)
-        init_scheme = InitScheme(eigen_init_, self.std, beta)
+        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr = create_dataset(self.datasetName, batchSize)
+        init_scheme = InitScheme(self.eigenInit, self.std, beta)
         model = koopmanAE(init_scheme, beta, alpha, input_size)
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        loss_dict = train(model, device, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, self.epochs)
+        loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, self.epochs)
         return loss_dict
 
     def __str__(self):
@@ -79,4 +78,4 @@ def getInitFunc(distributionName):
     
 if __name__ == "__main__":
     exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
-    print(exp)
+    exp.run()
