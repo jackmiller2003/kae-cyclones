@@ -1,3 +1,4 @@
 ./saved_models/*
 /src/log.txt
 /input
+/src/log-ae3.txt
