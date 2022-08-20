@@ -1,6 +1,5 @@
 from datasets import *
 from models import *
-import dl_pipeline
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn
@@ -23,11 +22,11 @@ else:
     saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
 print(f"Saved models path: {saved_models_path}")
 
-def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenvalue_penalty_type, eigen_dist, eigen_penalty, group, run="1", epochs=args.num_epochs):
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, eigen_penalty, epochs):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.train()
-    
+    lamb, nu, eta, alpha = 1, 1, 1e-2, 10
     loss_dict = {}
 
     for epoch in range(epochs):
@@ -42,7 +41,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
 
                 out, out_back = model(x=cyclone_array[0].unsqueeze(0), mode='forward')
 
-                for k in range(args.forward_steps - 1):
+                for k in range(model.steps - 1):
                     if k == 0:
                         loss_fwd = criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
                     else:
@@ -51,54 +50,23 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 loss_identity = criterion(out[-1], cyclone_array[0].unsqueeze(0).to(device)) * args.forward_steps
 
                 loss_bwd, loss_consist, loss_bwd, loss_consist = 0, 0, 0, 0
-                if args.model == 'constrainedKAE':
-                    out, out_back = model(x=cyclone_array[-1].unsqueeze(0), mode='backward')
-
-                    for k in range(args.forward_steps-1):
-                        if k == 0:
-                            loss_bwd = criterion(out_back[k], reversed_array[k+1].unsqueeze(0).to(device))
-                        else:
-                            loss_bwd += criterion(out_back[k], reversed_array[k+1].unsqueeze(0).to(device))
-
-                    A = model.dynamics.dynamics.weight
-                    B = model.backdynamics.dynamics.weight
-
-                    K = A.shape[-1]
-
-                    for k in range(1,K+1):
-                        As1 = A[:,:k]
-                        Bs1 = B[:k,:]
-                        As2 = A[:k,:]
-                        Bs2 = B[:,:k]
-
-                        Ik = torch.eye(k).float().to(device)
-
-                        if k == 1:
-                            loss_consist = (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                            torch.sum((torch.mm(As2, Bs2) - Ik)**2) ) / (2.0*k)
-                        else:
-                            loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                            torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)
                     
-                closs += loss_fwd + args.lamb * loss_identity + args.nu * loss_bwd + args.eta * loss_consist
-                ciden += args.lamb * loss_identity
-                cbwd += args.nu * loss_bwd
-                ccons += args.eta * loss_consist
+                closs += loss_fwd + lamb * loss_identity + nu * loss_bwd + eta * loss_consist
+                ciden += lamb * loss_identity
+                cbwd += nu * loss_bwd
+                ccons += eta * loss_consist
                 cfwd += loss_fwd
 
-                if eigen_penalty:
-                    A = model.dynamics.dynamics.weight.cpu().detach().numpy()
-                    w, v = np.linalg.eig(A)
-                    if eigenvalue_penalty_type == 'max':
-                        w_pen = np.max(np.absolute(w))
-                    elif eigenvalue_penalty_type == 'average':
-                        w_pen = np.average(np.absolute(w))
-                    elif eigenvalue_penalty_type == 'inverse':
-                        w_pen = 1/np.min(np.absolute(w))
-                    elif args.eigenvalue_penalty_type == 'unit_circle':
-                        w_pen = np.sum(np.absolute(np.diff(1, w)))
-                    closs += args.alpha * w_pen
-                    ceigen += args.alpha * w_pen
+                
+                A = model.dynamics.dynamics.weight.cpu().detach().numpy()
+                w, _ = np.linalg.eig(A)
+                if eigenLoss == 'max': w_pen = np.max(np.absolute(w))
+                elif eigenLoss == 'average': w_pen = np.average(np.absolute(w))
+                elif eigenLoss == 'inverse': w_pen = 1/np.min(np.absolute(w))
+                elif eigenLoss == 'unit_circle': w_pen = np.sum(np.absolute(np.diff(1, w)))
+                else: w_pen = 0
+                closs += alpha * w_pen
+                ceigen += alpha * w_pen
         
             optimizer.zero_grad(set_to_none=True)
             closs.backward()
@@ -183,4 +151,4 @@ def create_dataset(dataset:str):
         beta = 16
         learning_rate = 1e-4
 
-    return loader, val_loader, input_size, alpha, beta, learning_rate
+    return train_ds, val_ds, test_ds, loader, val_loader, input_size, alpha, beta, learning_rate

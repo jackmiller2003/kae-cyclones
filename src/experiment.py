@@ -1,4 +1,5 @@
 import initLibrary, lossLibrary
+from train import *
 
 class ExperimentCollection:
     def __init__(self, lossList, initList, stdList, datasetName, name):
@@ -26,15 +27,23 @@ class ExperimentCollection:
             json.dump(self.collectionResults, f)
 
 class Experiment:
-    def __init__(self, eigenLoss, eigenInit, std, datasetName, **kwargs):
+    def __init__(self, eigenLoss:str, eigenInit:str, std, datasetName, **kwargs):
         self.eigenLoss = eigenLoss
         self.eigenInit = eigenInit
         self.std = std
         self.datasetName = datasetName
+        self.epochs = 50
     
-    def run(self, epochs, batchSize):
-        loss_dict = train() # need to fix this
-        return None
+    def run(self, epochs=50, batchSize=128):
+        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr = create_dataset(self.datasetName)
+        init_scheme = InitScheme(eigen_init_, self.std, beta)
+        model = koopmanAE(init_scheme, beta, alpha, input_size)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        loss_dict = train(model, device, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, self.epochs)
+        return loss_dict
+
+    def __str__(self):
+        return f"Experiment for {self.epochs} epochs. Eigenloss={self.eigenLoss}, eigeninit={self.eigenInit}"
 
 class InitScheme:
     def __init__(self, distributionName, spread, matrixSize):
@@ -51,7 +60,7 @@ class LossScheme:
         self.weight = weight
     
     def __call__(self):
-        return getInitFunc(self.distributionName)(self.weight)
+        return getLossFunc(self.distributionName)(self.weight)
 
 def getInitFunc(distributionName):
     if distributionName == 'gaussianElement':
@@ -66,12 +75,8 @@ def getInitFunc(distributionName):
         return initLibrary.svdElement
     elif distributionName == 'unitPerturbEigen':
         return initLibrary.unitPerturb
-
-def getLossFunc(lossName):
-    if lossName == 'inverse':
-        return lossLibrary.inverse
+    
     
 if __name__ == "__main__":
-    init_scheme = InitScheme("gaussianElement", 1, 6)
-    print(init_scheme())
-    
+    exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
+    print(exp)

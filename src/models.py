@@ -1,7 +1,6 @@
 from torch import nn
 import torch
 import torch.nn.functional as F
-from data_synthesis import *
 from initLibrary import *
 from experiment import *
 
