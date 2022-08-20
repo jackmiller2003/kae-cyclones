@@ -51,8 +51,18 @@ class ExperimentCollection:
     def plotResults(self):
         with open(f"~/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             results = json.load(f)
+        fig, axs = plt.subplots(1,2,figsize=(15,15), dpi=300)
+        epochs = len(results["average"]["gaussianElement"]["1e0"]["loss"])
+        axs[0][0].plot(epochs, results["average"]["gaussianElement"]["1e0"]["fwd_val"], label="Gaussian Element")
+        axs[0][1].plot(epochs, results["average"]["gaussianEigen"]["1e0"]["fwd_val"], label="Gaussian Eigen")
+        for l in axs:
+            for ax in l:
+                ax.set_xlabel('Epochs')
+                ax.set_ylabel('Mean Squared Error')
+                ax.set_yscale('log')
+                ax.set_xscale('log')
+                ax.legend(loc=1)
         
-    
     def loadRunRegime(self, regimeFileName):
         with open(regimeFileName, 'r') as f:
             self.runRegime = json.load(f)
