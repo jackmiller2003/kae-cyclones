@@ -103,4 +103,4 @@ if __name__ == "__main__":
     print(expCol.runRegime)
     expCol.run()
     print(expCol.collectionResults)
-    expCol.save()
+    expCol.saveResults()
