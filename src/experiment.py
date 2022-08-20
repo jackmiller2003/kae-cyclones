@@ -68,12 +68,6 @@ class Experiment:
         loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs)
         return loss_dict
 
-    def plot(self):
-        loss_dict = self.run()
-        epochs = [x for x in range(len(loss_dict["loss"]))]
-        plt.plot(epochs, loss_dict["fwd"], label="Forward")
-        plt.show()
-
     def __str__(self):
         return f"Experiment for {self.epochs} epochs. Eigenloss={self.eigenLoss}, eigeninit={self.eigenInit}"
 
