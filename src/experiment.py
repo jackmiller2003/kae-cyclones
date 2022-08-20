@@ -24,6 +24,11 @@ class ExperimentCollection:
     def saveResults(self):
         with open(f"~/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
+
+    def plotResults(self):
+        with open(f"~/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
+            results = json.load(f)
+        
     
     def loadRunRegime(self, regimeFileName):
         with open(regimeFileName, 'r') as f:
