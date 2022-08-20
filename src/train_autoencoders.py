@@ -236,9 +236,11 @@ def ei_finder():
     plt.show()
     return plot_losses
     
-    
 if __name__ == '__main__':
-    ei_finder()
+        
+
+# if __name__ == '__main__':
+#     ei_finder()
 
 """
 if __name__ == '__main__':
