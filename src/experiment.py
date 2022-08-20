@@ -8,21 +8,44 @@ class ExperimentCollection:
         self.collectionResults = {}
         self.runRegime = {}
     
-    def run(self, epochs=50, numRuns=3, batchSize=64, **kwargs):        
+    def run(self, epochs=10, numRuns=1, batchSize=64, **kwargs):        
         for eigenLoss, eigenInits in self.runRegime.items():
+            self.collectionResults[eigenLoss] = {}
             for eigenInit, stds in eigenInits.items():
-                print(f"### {eigenLoss} and {eigenInit} ###")
+                self.collectionResults[eigenLoss][eigenInit] = {}
                 for std in stds:
+                    runDicts = []
                     for run in range(0, numRuns):
                         print(f"### {eigenLoss} and {eigenInit} and {std} and {run}###")
                         experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName)
-                        self.collectionResults[eigenLoss][eigenInit][std][run] = experiment.run(
-                            epochs = epochs,
-                            batchSize = batchSize
-                        )
+                        runDicts.append(experiment.run(epochs = epochs, batchSize = batchSize))
+                    
+                    averagedDict = {}
+                    finalDict = {}
+
+                    for key in runDicts[0].keys():
+                        averagedDict[key] = []
+
+                    for dct in runDicts:
+                        for key, lst in dct.items():
+                            averagedDict[key].append(lst)
+                        
+                    for key, llst in averagedDict.items():
+                        nlist = []
+                        for i in range(0, len(llst[0])):
+                            avg = 0
+                            for l in llst:
+                                avg += l[i]
+                            
+                            avg = avg/len(llst)
+                            nlist.append(avg)
+
+                        finalDict[key] = nlist
+
+                    self.collectionResults[eigenLoss][eigenInit][std] = finalDict
     
     def saveResults(self):
-        with open(f"~/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
+        with open(f"/home/156/jm0124/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
 
     def plotResults(self):
@@ -84,3 +107,5 @@ if __name__ == "__main__":
     expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
     expCol.run()
+    print(expCol.collectionResults)
+    expCol.saveResults()
