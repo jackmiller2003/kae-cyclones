@@ -25,6 +25,7 @@ else:
 def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
+    model.to(device)
     model.train()
     model.to(device)
     lamb, nu, eta, alpha = 1, 1, 1e-2, 10
@@ -40,7 +41,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 cyclone_array = data[0].float().to(device)
                 reversed_array = data[1].float().to(device)
 
-                out, out_back = model(x=cyclone_array[0].unsqueeze(0), mode='forward')
+                out, out_back = model(x=cyclone_array[0].unsqueeze(0).to(device), mode='forward')
 
                 for k in range(model.steps - 1):
                     if k == 0:
@@ -82,16 +83,16 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             avg_eigen_loss += ceigen
 
         if loss_dict == {}:
-            loss_dict['loss'] = [avg_loss/train_size]
-            loss_dict['iden'] = [avg_iden_loss/train_size]
-            loss_dict['fwd'] = [avg_fwd_loss/train_size]
+            loss_dict['loss'] = [avg_loss.cpu().item()/train_size]
+            loss_dict['iden'] = [avg_iden_loss.cpu().item()/train_size]
+            loss_dict['fwd'] = [avg_fwd_loss.cpu().item()/train_size]
             loss_dict['bwd'] = [avg_bwd_loss/train_size]
             loss_dict['cons'] = [avg_cons_loss/train_size]
             loss_dict['eigen'] = [avg_eigen_loss/train_size]
         else:
-            loss_dict['loss'].append(avg_loss/train_size)
-            loss_dict['iden'].append(avg_iden_loss/train_size)
-            loss_dict['fwd'].append(avg_fwd_loss/train_size)
+            loss_dict['loss'].append(avg_loss.cpu().item()/train_size)
+            loss_dict['iden'].append(avg_iden_loss.cpu().item()/train_size)
+            loss_dict['fwd'].append(avg_fwd_loss.cpu().item()/train_size)
             loss_dict['bwd'].append(avg_bwd_loss/train_size)
             loss_dict['cons'].append(avg_cons_loss/train_size)
             loss_dict['eigen'].append(avg_eigen_loss/train_size)
