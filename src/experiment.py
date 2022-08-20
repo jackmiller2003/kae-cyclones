@@ -8,7 +8,7 @@ class ExperimentCollection:
         self.collectionResults = {}
         self.runRegime = {}
     
-    def run(self, epochs=25, numRuns=10, batchSize=64, **kwargs):        
+    def run(self, epochs=25, numRuns=10, batchSize=16, **kwargs):        
         for eigenLoss, eigenInits in self.runRegime.items():
             self.collectionResults[eigenLoss] = {}
             for eigenInit, stds in eigenInits.items():
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
     # exp.run()
 
-    expCol = ExperimentCollection('ocean', 'testRun2')
+    expCol = ExperimentCollection('cyclone', 'cyclone')
     expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
     expCol.run()
