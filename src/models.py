@@ -24,7 +24,6 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
         imag_dist = np.random.uniform(-1,1, w.shape[0])
         w = w + imag_dist
     elif distribution == 'gaussian':
-        print("In gaussian")
         w.real = np.random.normal(loc=0, scale=std, size=w.shape[0])
         imag_dist = np.random.normal(loc=0, scale=std, size=w.shape[0])
         w = w + imag_dist
@@ -230,7 +229,7 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
-    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
+    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=1, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
         super(koopmanAE, self).__init__()
         self.steps = steps
         self.steps_back = steps_back
