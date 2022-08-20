@@ -1,1 +1,0 @@
-{"forward validation": 0.10705533411158123, "_timestamp": 1656362237, "_runtime": 25564, "_step": 99, "loss": 0.21180182695388794, "identity loss": 0.10657025128602982, "forward loss": 0.10523149371147156, "backward loss": 0.0, "consistency loss": 0.0, "eigenvalue loss": 0.0, "_wandb": {"runtime": 25567}}

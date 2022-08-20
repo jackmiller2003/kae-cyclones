@@ -14,14 +14,12 @@ from pathlib import Path
 import dataset_generation
 import csv
 
-os.environ["WANDB_MODE"] = "offline"
 direct = os.getcwd()
 if direct[10:16] == 'jm0124':
     saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 else:
     saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
 print(f"Saved models path: {saved_models_path}")
-wandb_dir= f"{str(Path(os.path.dirname(os.path.abspath('__file__'))).parents[0])}/results"
 
 # TRAINING ARGUMENTS
 parser = argparse.ArgumentParser(description='Autoencoder Prediction')

@@ -1,5 +1,0 @@
-[default]
-entity = koopman_cyclone
-project = Koopman-autoencoders
-base_url = https://api.wandb.ai
-
