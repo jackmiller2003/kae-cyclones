@@ -65,7 +65,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 if eigenLoss == 'max': w_pen = np.max(np.absolute(w))
                 elif eigenLoss == 'average': w_pen = np.average(np.absolute(w))
                 elif eigenLoss == 'inverse': w_pen = 1/np.min(np.absolute(w))
-                elif eigenLoss == 'unit_circle': w_pen = np.sum(np.absolute(np.diff(1, w)))
+                elif eigenLoss == 'unit_circle': w_pen = np.sum(np.absolute(np.subtract(1, w)))
                 else: w_pen = 0
                 closs += alpha * w_pen
                 ceigen += alpha * w_pen
