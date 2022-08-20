@@ -138,9 +138,9 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     
     return loss_dict
 
-def create_model(alpha, beta):
+def create_model(alpha, beta, init_scheme, input_size):
     "Creates a model after instantiating a dataset."
-    model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=True, eigen_distribution='uniform', maxmin=std, input_size=input_size).to(0)
+    model_dae = koopmanAE(init_scheme, b=beta, alpha=alpha, input_size=input_size).to(0)
     return model_dae
 
 def create_dataset(dataset:str):
