@@ -26,6 +26,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.train()
+    model.to(device)
     lamb, nu, eta, alpha = 1, 1, 1e-2, 10
     loss_dict = {}
 

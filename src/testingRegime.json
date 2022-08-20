@@ -1,0 +1,6 @@
+{
+    "average":{
+        "gaussianElement":["1e-3","1e-2","1e-1","1e0","1e1","1e2"],
+        "gaussianEigen":["1e-1","1e0", "1e1"]
+    }
+}
