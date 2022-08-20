@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
     # exp.run()
 
-    expCol = ExperimentCollection('cyclone', 'cyclone')
+    expCol = ExperimentCollection('cyclone-limited', 'cyclone')
     expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
     expCol.run()
