@@ -2,29 +2,33 @@ import initLibrary
 from train import *
 
 class ExperimentCollection:
-    def __init__(self, lossList, initList, stdList, datasetName, name):
-        self.lossList = lossList
-        self.initList = initList
-        self.stdList = stdList
+    def __init__(self, datasetName, name):
         self.datasetName = datasetName
         self.name = name
         self.collectionResults = {}
+        self.runRegime = {}
     
     def run(self, epochs=50, numRuns=3, batchSize=64, **kwargs):        
-        for eigenLoss in self.lossList:
-            for eigenInit in self.initList:
+        for eigenLoss, eigenInits in self.runRegime.items():
+            for eigenInit, stds in eigenInits.items():
                 print(f"### {eigenLoss} and {eigenInit} ###")
-                for run in range(0, numRuns):
-                    experiment = Experiment(eigenLoss, eigenInit, std)
-                    self.collectionResults[eigenLoss][eigenInit][std][run] = experiment.run(
-                        epochs = epochs,
-                        batchSize = batchSize,
-                        datasetName = self.datasetName
-                    )
+                for std in stds:
+                    for run in range(0, numRuns):
+                        print(f"### {eigenLoss} and {eigenInit} and {std} and {run}###")
+                        experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName)
+                        self.collectionResults[eigenLoss][eigenInit][std][run] = experiment.run(
+                            epochs = epochs,
+                            batchSize = batchSize
+                        )
     
     def saveResults(self):
         with open(f"~/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
+    
+    def loadRunRegime(self, regimeFileName):
+        with open(regimeFileName, 'r') as f:
+            self.runRegime = json.load(f)
+
 
 class Experiment:
     def __init__(self, eigenLoss:str, eigenInit:str, std, datasetName, **kwargs):
@@ -68,6 +72,10 @@ def getInitFunc(distributionName):
         return initLibrary.unitPerturb
     
 if __name__ == "__main__":
-    exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
-    print(exp)
-    exp.plot()
+    # exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
+    # exp.run()
+
+    expCol = ExperimentCollection('ocean', 'testRun')
+    expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
+    print(expCol.runRegime)
+    expCol.run()

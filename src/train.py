@@ -27,6 +27,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     criterion = nn.MSELoss().to(device)
     model.to(device)
     model.train()
+    model.to(device)
     lamb, nu, eta, alpha = 1, 1, 1e-2, 10
     loss_dict = {}
 
