@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 def gaussianElement(std, matrixSize):
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/matrixSize]))
