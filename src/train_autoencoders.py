@@ -15,8 +15,6 @@ import dataset_generation
 import csv
 
 os.environ["WANDB_MODE"] = "offline"
-
-logging.basicConfig(level=logging.DEBUG, filename='log-ae-3.txt')
 direct = os.getcwd()
 if direct[10:16] == 'jm0124':
     saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
@@ -71,6 +69,8 @@ parser.add_argument('--runs', type=int, default='3', help='number of runs')
 parser.add_argument('--list_of_penalty', nargs='+', help='Penalty list', required=False)
 #
 parser.add_argument('--list_of_init', nargs='+', help='Init list', required=False)
+#
+parser.add_argument('--list_of_std', type=float, nargs='+', help='Init list', required=False)
 
 args = parser.parse_args()
 
@@ -83,30 +83,6 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     model.train()
     
     loss_dict = {}
-    
-    if args.dataset == "cyclone":
-        project_wandb = "Koopman-autoencoders"
-    elif args.dataset == "ocean":
-        project_wandb = "ocean"
-    elif args.dataset == "pendulum":
-        project_wandb = "pendulum"
-
-    # wandb.init(
-    #   # Set the project where this run will be logged
-    #   project="Koopman-autoencoders", 
-    #   # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
-    #   name=f"{group}:{args.dataset}:{run}", 
-    #   dir=wandb_dir,
-    #   # Track hyperparameters and run metadata
-    #   config={
-    #   "learning_rate": args.learning_rate,
-    #   "architecture": args.model,
-    #   "dataset": args.dataset,
-    #   "epochs": args.num_epochs,
-    #   "weight_decay": args.weight_decay,
-    #   })
-    
-    # print(wandb.run.settings.mode)
 
     for epoch in range(epochs):
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
@@ -215,27 +191,19 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['fwd_val'] = [forward_val]
         else:
             loss_dict['fwd_val'].append(forward_val)
-        
-        # wandb.log({'forward validation': forward_val})
-    
-        logging.info(loss_dict)
 
-        # wandb.log({
-        #     'loss':avg_loss/train_size,
-        #     'identity loss': avg_iden_loss/train_size,
-        #     'forward loss': avg_fwd_loss/train_size,
-        #     'backward loss': avg_bwd_loss/train_size,
-        #     'consistency loss': avg_cons_loss/train_size,
-        #     'eigenvalue loss': avg_eigen_loss/train_size
-        # })
-
-        with open(f'{group}.csv', 'a', encoding='UTF8', newline='') as f:
+        with open(f'{group}.csv', 'a', encoding='UTF8') as f:
             writer = csv.writer(f)
 
-            # write multiple rows
             writer.writerow([run,eigenvalue_penalty_type,eigen_dist, avg_fwd_loss.item()/train_size, forward_val])
-
-            f.close()
+        
+        with open(f'eigen-{group}.csv', 'a', encoding = 'UTF8') as f:
+            writer = csv.writer(f)
+            print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
+            eigen_row = [run, eigenvalue_penalty_type, eigen_dist]
+            for elem in np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0]:
+                eigen_row.append(elem)
+            writer.writerow(eigen_row)
     
     return model, loss_dict
 
@@ -300,7 +268,7 @@ if __name__ == '__main__':
             input_size = 2
 
             alpha = 4
-            beta = 4
+            beta = 16
 
             learning_rate = 1e-5
             
@@ -324,21 +292,11 @@ if __name__ == '__main__':
 
         eigen_init = True if args.eigen_init == 'True' else False
 
-        # print(f'eigen init {eigen_init}')
-
-        # if not (args.pre_trained == ''):
-        #     print(f"Loading model: {args.pre_trained}")
-        #     logging.info(f"Loading model: {args.pre_trained}")
-        #     model_dae.load_state_dict(torch.load(f'{saved_models_path}/{args.pre_trained}'))
-
-        logging.info("Training DAE")
-
-        #if args.list_of_std != None:
-        if 1 == 2: # @jack I think you meant to include an argument in args for list_of_std
+        if args.list_of_std != None:
             for std in args.list_of_std:
                 for i in tqdm(range(0,args.runs)):
                     model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=True, eigen_distribution='uniform', maxmin=std, input_size=input_size).to(0)
-                    train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, 'no-penalty', f'uniform-{std}', True, args.experiment_name, i)
+                    train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, 'no-penalty', f'uniform-{std}', False, args.experiment_name, i)
         elif args.list_of_penalty != None:
             for penalty in args.list_of_penalty:
                 for init in args.list_of_init:
@@ -357,6 +315,5 @@ if __name__ == '__main__':
                 train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, 'no-penalty', 'gaussian element', False, args.experiment_name, i)
         else:
             for i in range(0,args.runs):
-                # print(i)
                 model_dae = koopmanAE(beta, steps=4, steps_back=4, alpha=alpha, eigen_init=eigen_init, eigen_distribution=args.init_distribution, maxmin=args.eigen_init_maxmin, input_size=input_size).to(0)
                 train(model_dae, 0, loader, val_loader, len(train_ds), len(val_ds), learning_rate, args.eigenvalue_penalty_type, args.init_distribution, args.experiment_name, i)

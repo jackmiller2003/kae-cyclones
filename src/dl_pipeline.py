@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn
 import logging
 
-logging.basicConfig(level=logging.DEBUG, filename='log.txt')
-logging.debug('This will get logged')
+# logging.basicConfig(level=logging.DEBUG, filename='log.txt')
+# logging.debug('This will get logged')
 saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
 
 
@@ -46,8 +46,6 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
 
                 for k in range(steps-1):
                     if k == 0:
-                        np.save('example-in.npy', out[k].cpu().detach().numpy())
-                        np.save('example-out.npy', cyclone_array[k+1].cpu().detach().numpy())
                         loss_fwd = criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
                     else:
                         loss_fwd += criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
@@ -146,13 +144,6 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
         eigen_loss.append(avg_eigen_loss/(ds_length))
         losses.append(avg_loss / (ds_length))
 
-        logging.info(f"{epoch}. {avg_loss/(ds_length)}")
-        logging.info(f"Fwd loss: {fwd_loss}")
-        logging.info(f"Back loss: {back_loss}")
-        logging.info(f"Iden loss: {iden_loss}")
-        logging.info(f"Cons loss: {cons_loss}")
-        logging.info(f"Eigen loss: {eigen_loss}")
-
         print(f"{epoch}. {avg_loss/(ds_length)}")
         print(f"Fwd loss: {fwd_loss}")
         print(f"Back loss: {back_loss}")
@@ -201,8 +192,6 @@ def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epo
 
                 for k in range(steps-1):
                     if k == 0:
-                        np.save('example-in.npy', out[k].cpu().detach().numpy())
-                        np.save('example-out.npy', cyclone_array[k+1].cpu().detach().numpy())
                         loss_fwd = criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
                     else:
                         loss_fwd += criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
@@ -352,8 +341,6 @@ if __name__ == '__main__':
     dataset, val_ds, test_ds = generate_example_dataset()
     loader = torch.utils.data.DataLoader(dataset, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_ds, batch_size=128, num_workers=8, pin_memory=True, shuffle=True)
-
-    logging.info("Training DAE")
     model_dae, losses2, fwd_loss2, back_loss2, iden_loss2, cons_loss2 = train(model_dae, loader, len(dataset), koopman=False, num_epochs=50)
     # logging.info("Training AE")
     # regular_ae, losses3, fwd_loss3, back_loss3, iden_loss3, cons_loss3 = train(regular_ae, loader, len(dataset), koopman=False, num_epochs=30)
