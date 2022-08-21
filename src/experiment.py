@@ -116,6 +116,6 @@ if __name__ == "__main__":
     expCol = ExperimentCollection('pendulum', 'pendulumRun_diss0')
     expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
-    expCol.run(epochs=25, numRuns=10)
+    expCol.run(epochs=25, numRuns=20)
     print(expCol.collectionResults)
     expCol.saveResults()
