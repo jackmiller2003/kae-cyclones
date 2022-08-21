@@ -112,8 +112,9 @@ def getInitFunc(distributionName):
 if __name__ == "__main__":
     # exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
     # exp.run()
-    expCol = ExperimentCollection('cyclone-limited', 'cyclone')
+    expCol = ExperimentCollection('cyclone-limited', 'cycloneRun4')
+    expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
-    expCol.run(epochs=25, numRuns=10)
+    expCol.run(epochs=25, numRuns=20)
     print(expCol.collectionResults)
     expCol.saveResults()

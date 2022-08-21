@@ -15,7 +15,6 @@ from pathlib import Path
 import dataset_generation
 import csv
 
-logging.basicConfig(level=logging.DEBUG, filename='log-ae-3.txt')
 direct = os.getcwd()
 if direct[10:16] == 'jm0124':
     saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
@@ -103,8 +102,6 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['fwd_val'] = [forward_val]
         else:
             loss_dict['fwd_val'].append(forward_val)
-    
-        logging.info(loss_dict)
     
     return loss_dict
 
