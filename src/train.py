@@ -127,7 +127,7 @@ def create_dataset(dataset:str, batch_size):
         learning_rate = 1e-3
 
     elif dataset == 'pendulum':
-        train_ds, val_ds, test_ds = generate_pendulum_ds(args.dissipative_pendulum_level)
+        train_ds, val_ds, test_ds = generate_pendulum_ds(0)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2
