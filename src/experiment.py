@@ -8,7 +8,7 @@ class ExperimentCollection:
         self.collectionResults = {}
         self.runRegime = {}
     
-    def run(self, epochs=25, numRuns=10, batchSize=16, **kwargs):        
+    def run(self, epochs=25, numRuns=2, batchSize=64, **kwargs):        
         for eigenLoss, eigenInits in self.runRegime.items():
             self.collectionResults[eigenLoss] = {}
             for eigenInit, stds in eigenInits.items():
@@ -108,13 +108,13 @@ def getInitFunc(distributionName):
         return initLibrary.svdElement
     elif distributionName == 'unitPerturbEigen':
         return initLibrary.unitPerturb
+    elif distributionName == 'unitary':
+        return initLibrary.unitary
     
 if __name__ == "__main__":
-    # exp = Experiment("inverse", "gaussianElement", std=1, datasetName="ocean")
-    # exp.run()
-    expCol = ExperimentCollection('cyclone-limited', 'cycloneRun4')
+    expCol = ExperimentCollection('pendulum', 'pendulumDiss9_2')
     expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
-    expCol.run(epochs=25, numRuns=20)
+    expCol.run(epochs=50, numRuns=5)
     print(expCol.collectionResults)
     expCol.saveResults()

@@ -1,7 +1,9 @@
 from torch import nn
 import torch
 import torch.nn.functional as F
-from data_synthesis import *
+from initLibrary import *
+from experiment import *
+from eunn import EUNN
 
 def gaussian_init_(n_units, std=1):    
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
@@ -16,15 +18,17 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
 
     if distribution == 'uniform':
+        print(f"Uniform {maxmin}")
         w.real = np.random.uniform(-maxmin,maxmin, w.shape[0])
         imag_dist = np.random.uniform(-maxmin,maxmin, w.shape[0])
-        w = w + imag_dist
+        w = w + np.zeros(w.shape[0], dtype=complex)
+        w.imag = imag_dist
+        print(w)
     elif distribution == 'uniform-small':
         w.real = np.random.uniform(-1,1, w.shape[0])
         imag_dist = np.random.uniform(-1,1, w.shape[0])
         w = w + imag_dist
     elif distribution == 'gaussian':
-        print("In gaussian")
         w.real = np.random.normal(loc=0, scale=std, size=w.shape[0])
         imag_dist = np.random.normal(loc=0, scale=std, size=w.shape[0])
         w = w + imag_dist
@@ -61,61 +65,6 @@ class encoderNetSimple(nn.Module):
 
         return x
 
-class encoderNet(nn.Module):
-    def __init__(self, alpha, b):
-        super(encoderNet, self).__init__()
-
-        self.tanh = nn.Tanh()
-
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=256, kernel_size=11, stride=4, padding=0, groups=1, bias=True)
-        self.conv1_bn = nn.BatchNorm2d(256)
-
-        self.conv2 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, padding=0, groups=1, bias=True)
-        self.conv2_bn = nn.BatchNorm2d(256)
-
-        self.conv3 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=2, stride=1, padding=0, groups=1, bias=True)
-        self.conv3_bn = nn.BatchNorm2d(256)
-
-        self.fc1 = nn.Linear(256*2*2, 16 * alpha)
-        self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
-        self.fc3 = nn.Linear(16 * alpha, b)
-
-        self.init_weights()
-
-    
-    def init_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0)
-            elif isinstance(m, nn.Conv2d):
-                nn.init.xavier_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0)
-    
-    def forward(self, x):
-
-        x = self.conv1_bn(self.conv1(x))
-        # print(f"4. before last conv {x.shape}")
-        x = F.max_pool2d(x, kernel_size=3, stride=2, padding=0)
-
-        # print(f"3. before last conv {x.shape}")
-        x = self.conv2_bn(self.conv2(x))
-        # print(f"2. before last conv {x.shape}")
-        x = F.max_pool2d(x, kernel_size=3, stride=2, padding=0)
-
-        # print(f"before last conv {x.shape}")
-        x = self.conv3_bn(self.conv3(x))
-
-        x = x.view(-1, 256*2*2)
-
-        x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
-        x = self.fc3(x)
-
-        return x
-
 class decoderNetSimple(nn.Module):
     def __init__(self, alpha, b, input_size=2):
         super(decoderNetSimple, self).__init__()
@@ -147,76 +96,19 @@ class decoderNetSimple(nn.Module):
         else:
             return x.view(-1, 1, self.input_size)
 
-class decoderNet(nn.Module):
-    def __init__(self, alpha, b):
-        super(decoderNet, self).__init__()
-        self.b = b
-
-        self.tanh = nn.Tanh()
-
-        self.fc1 = nn.Linear(in_features = b, out_features = 16*alpha)
-        self.fc2 = nn.Linear(in_features = 16*alpha, out_features = 16*alpha)
-        self.fc3 = nn.Linear(in_features = 16*alpha, out_features = 256*2*2)
-
-        self.convtrans1 = nn.ConvTranspose2d(in_channels = 256, out_channels = 256, kernel_size=2, stride=1, padding=0, bias=True)
-        self.convtrans1_bn = nn.BatchNorm2d(256)
-        self.convtrans2 = nn.ConvTranspose2d(in_channels = 256, out_channels = 256, kernel_size=3, stride=2, padding=0, output_padding=1, bias=True)
-        self.convtrans2_bn = nn.BatchNorm2d(256)
-        self.convtrans3 = nn.ConvTranspose2d(in_channels = 256, out_channels = 256, kernel_size=3, stride=2, padding=0, output_padding=1, bias=True)
-        self.convtrans3_bn = nn.BatchNorm2d(256)
-        self.convtrans4 = nn.ConvTranspose2d(in_channels = 256, out_channels = 256, kernel_size=3, stride=2, padding=0, output_padding=1, bias=True)
-        self.convtrans4_bn = nn.BatchNorm2d(256)
-        self.convtrans5 = nn.ConvTranspose2d(in_channels = 256, out_channels = 1, kernel_size=11, stride=4, padding=0, output_padding=1, bias=True)
-        self.convtrans5_bn = nn.BatchNorm2d(1)
-        
-        self.init_weights()
-
-    
-    def init_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0)
-            elif isinstance(m, nn.ConvTranspose2d):
-                nn.init.xavier_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0)
-    
-    def forward(self, x):
-
-        x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
-        x = self.fc3(x)
-
-        x = torch.reshape(x,(1,256,2,2))
-        
-        x = self.convtrans1_bn(self.convtrans1(x))
-        # print(f"After first inverse {x.shape}")
-        x = self.convtrans2_bn(self.convtrans2(x))
-        # print(f"After second inverse {x.shape}")
-        x = self.convtrans3_bn(self.convtrans3(x))
-        # print(f"After third inverse {x.shape}")
-        x = self.convtrans4_bn(self.convtrans4(x))
-        # print(f"After fourth inverse {x.shape}")
-        x = self.convtrans5_bn(self.convtrans5(x))
-
-        return x
-
 class dynamics(nn.Module):
-    def __init__(self, b, init_scale, eigen_init=False, eigen_distribution='uniform', maxmin=2, std=1):
+    def __init__(self, b, init_scheme, unitary=False):
         super(dynamics, self).__init__()
-        self.dynamics = nn.Linear(b, b, bias=False)
-
-        if eigen_init:
-            self.dynamics.weight.data = eigen_init_(b, distribution=eigen_distribution, std=1, maxmin=maxmin)
+        if unitary: self.dynamics = EUNN(b)
         else:
-            self.dynamics.weight.data = gaussian_init_(b, std=std)           
-            U, _, V = torch.svd(self.dynamics.weight.data)
-            self.dynamics.weight.data = torch.mm(U, V.t()) * init_scale
-    
+            self.dynamics = nn.Linear(b, b, bias=False)
+            self.dynamics.weight.data = init_scheme()
+        self.unitary = unitary
+
     def forward(self, x):
-        x = self.dynamics(x)
+        if self.unitary: x = self.dynamics(x)[:,:,0]
+        else:
+            x = self.dynamics(x)
         return x
 
 class dynamics_back(nn.Module):
@@ -230,6 +122,44 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
+    def __init__(self, init_scheme, b, alpha = 4, input_size=400):
+        super(koopmanAE, self).__init__()
+        self.steps = 4
+        self.steps_back = 4
+        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        
+        if init_scheme() == 'untiary':
+            self.dynamics = dynamics(b, init_scheme, True)
+        else:
+            self.dynamics = dynamics(b, init_scheme, False)
+        self.backdynamics = dynamics_back(b, self.dynamics)
+
+
+    def forward(self, x, mode='forward'):
+        out = []
+        out_back = []
+        z = self.encoder(x.contiguous())
+        q = z.contiguous()
+
+        
+        if mode == 'forward':
+            for _ in range(self.steps):
+                q = self.dynamics(q)
+                out.append(self.decoder(q))
+
+            out.append(self.decoder(z.contiguous())) 
+            return out, out_back    
+
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                q = self.backdynamics(q)
+                out_back.append(self.decoder(q))
+                
+            out_back.append(self.decoder(z.contiguous()))
+            return out, out_back
+
+class koopmanAE2(nn.Module):
     def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
         super(koopmanAE, self).__init__()
         self.steps = steps
