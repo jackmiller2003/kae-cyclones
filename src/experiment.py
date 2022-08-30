@@ -45,7 +45,7 @@ class ExperimentCollection:
                     self.collectionResults[eigenLoss][eigenInit][std] = finalDict
     
     def saveResults(self):
-        with open(f"/home/156/jm0124/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
+        with open(f"/home/156/cn1951/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
 
     def plotResults(self):
@@ -116,6 +116,6 @@ if __name__ == "__main__":
     expCol = ExperimentCollection('pendulum', 'pendulumRun_diss0')
     expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegime.json')
     print(expCol.runRegime)
-    expCol.run(epochs=25, numRuns=20)
+    expCol.run(epochs=15, numRuns=3)
     print(expCol.collectionResults)
     expCol.saveResults()
