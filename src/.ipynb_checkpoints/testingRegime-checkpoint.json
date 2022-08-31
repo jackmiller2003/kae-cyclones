@@ -1,14 +1,22 @@
 {
-    "max":{
-        "gaussianElement":["1e0"]
+    "unit_circle_mae":{
+        "gaussianEigen":["1e0"]
     },
-    "average":{
-        "gaussianElement":["1e0"]
+    "unit_circle_mse":{
+        "gaussianEigen":["1e0"]
     },
+<<<<<<< HEAD
     "inverse":{
         "gaussianElement":["1e0"]
     },
     "unit_circle":{
         "gaussianElement":["1e0"]
+=======
+    "origin_mse":{
+        "gaussianEigen":["1e0"]
+    },
+    "none":{
+        "gaussianEigen":["1e0"]
+>>>>>>> b155dc7c674639140a001e170489f62234390ab0
     }
 }

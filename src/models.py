@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from initLibrary import *
 from experiment import *
+from eunn import EUNN
 
 def gaussian_init_(n_units, std=1):    
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
@@ -96,13 +97,18 @@ class decoderNetSimple(nn.Module):
             return x.view(-1, 1, self.input_size)
 
 class dynamics(nn.Module):
-    def __init__(self, b, init_scheme):
+    def __init__(self, b, init_scheme, unitary=False):
         super(dynamics, self).__init__()
-        self.dynamics = nn.Linear(b, b, bias=False)
-        self.dynamics.weight.data = init_scheme()
+        if unitary: self.dynamics = EUNN(b)
+        else:
+            self.dynamics = nn.Linear(b, b, bias=False)
+            self.dynamics.weight.data = init_scheme()
+        self.unitary = unitary
 
     def forward(self, x):
-        x = self.dynamics(x)
+        if self.unitary: x = self.dynamics(x)[:,:,0]
+        else:
+            x = self.dynamics(x)
         return x
 
 class dynamics_back(nn.Module):
@@ -123,7 +129,10 @@ class koopmanAE(nn.Module):
         self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
         self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
         
-        self.dynamics = dynamics(b, init_scheme)
+        if init_scheme() == 'unitary':
+            self.dynamics = dynamics(b, init_scheme, True)
+        else:
+            self.dynamics = dynamics(b, init_scheme, False)
         self.backdynamics = dynamics_back(b, self.dynamics)
 
 

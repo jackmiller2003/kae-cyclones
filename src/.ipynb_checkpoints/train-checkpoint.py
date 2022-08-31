@@ -59,13 +59,14 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 cfwd += loss_fwd
 
                 
-                A = model.dynamics.dynamics.weight.cpu().detach().numpy()
-                w, _ = np.linalg.eig(A)
+                #A = model.dynamics.dynamics.weight.cpu().detach().numpy()
+                #w, _ = np.linalg.eig(A)
+                w = torch.linalg.eigvals(model.dynamics.dynamics.weight)
                 if eigenLoss == 'max': w_pen = np.max(np.absolute(w))
                 elif eigenLoss == 'average': w_pen = np.average(np.absolute(w))
                 elif eigenLoss == 'inverse': w_pen = 1/np.min(np.absolute(w))
-                elif eigenLoss == 'unit_circle': w_pen = np.sum(np.absolute(np.subtract(1, w)))
-                else: w_pen = 0
+                elif eigenLoss == 'unit_circle': w_pen = torch.nn.MSELoss()(torch.abs(w), torch.ones(w.shape).to(w.device))
+                else: w_pen = torch.tensor(1)
                 closs += alpha * w_pen
                 ceigen += alpha * w_pen
         
@@ -87,15 +88,19 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['fwd'] = [avg_fwd_loss.cpu().item()/train_size]
             loss_dict['bwd'] = [avg_bwd_loss/train_size]
             loss_dict['cons'] = [avg_cons_loss/train_size]
-            loss_dict['eigen'] = [avg_eigen_loss/train_size]
+            loss_dict['eigen'] = [avg_eigen_loss.cpu().item()/train_size]
         else:
             loss_dict['loss'].append(avg_loss.cpu().item()/train_size)
             loss_dict['iden'].append(avg_iden_loss.cpu().item()/train_size)
             loss_dict['fwd'].append(avg_fwd_loss.cpu().item()/train_size)
             loss_dict['bwd'].append(avg_bwd_loss/train_size)
             loss_dict['cons'].append(avg_cons_loss/train_size)
-            loss_dict['eigen'].append(avg_eigen_loss/train_size)
+            loss_dict['eigen'].append(avg_eigen_loss.cpu().item()/train_size)
 
+        w = torch.linalg.eigvals(model.dynamics.dynamics.weight)
+        print(w)
+        print(f"Eigenloss: {avg_eigen_loss/train_size}")
+            
         forward_val = eval_models(model, val_loader, val_size, koopman=True)[0][0]
 
         if epoch == 0:
@@ -124,7 +129,7 @@ def create_dataset(dataset:str, batch_size):
         learning_rate = 1e-3
 
     elif dataset == 'pendulum':
-        train_ds, val_ds, test_ds = generate_pendulum_ds(0)
+        train_ds, val_ds, test_ds = generate_pendulum_ds(9)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2

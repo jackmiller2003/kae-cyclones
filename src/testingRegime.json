@@ -1,14 +1,5 @@
 {
-    "max":{
-        "gaussianElement":["1e0"]
-    },
-    "average":{
-        "gaussianElement":["1e0"]
-    },
-    "inverse":{
-        "gaussianElement":["1e0"]
-    },
-    "unit_circle":{
-        "gaussianElement":["1e0"]
+    "none":{
+        "gaussianEigen":["1e0"]
     }
 }
