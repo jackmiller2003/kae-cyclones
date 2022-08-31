@@ -1,14 +1,11 @@
 {
     "unit_circle_mae":{
-        "gaussianEigen":["1e0"]
+        "gaussianElement":["1e0"]
     },
     "unit_circle_mse":{
-        "gaussianEigen":["1e0"]
+        "gaussianElement":["1e0"]
     },
     "origin_mse":{
-        "gaussianEigen":["1e0"]
-    },
-    "none":{
-        "gaussianEigen":["1e0"]
+        "gaussianElement":["1e0"]
     }
 }

@@ -98,8 +98,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['eigen'].append(avg_eigen_loss.cpu().item()/train_size)
 
         w = torch.linalg.eigvals(model.dynamics.dynamics.weight)
-        print(w)
-        print(f"Eigenloss: {avg_eigen_loss/train_size}")
+        # print(w)
+        # print(f"Eigenloss: {avg_eigen_loss/train_size}")
             
         forward_val = eval_models(model, val_loader, val_size, koopman=True)[0][0]
 
@@ -128,7 +128,25 @@ def create_dataset(dataset:str, batch_size):
         beta = 16
         learning_rate = 1e-3
 
-    elif dataset == 'pendulum':
+    elif dataset == 'pendulum0':
+        train_ds, val_ds, test_ds = generate_pendulum_ds(0)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 4
+        learning_rate = 1e-5
+    
+    elif dataset == 'pendulum5':
+        train_ds, val_ds, test_ds = generate_pendulum_ds(5)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 4
+        learning_rate = 1e-5
+    
+    elif dataset == 'pendulum9':
         train_ds, val_ds, test_ds = generate_pendulum_ds(9)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)

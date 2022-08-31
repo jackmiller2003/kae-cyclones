@@ -1,5 +1,6 @@
 import initLibrary
 from train import *
+from tqdm import tqdm
 
 class ExperimentCollection:
     def __init__(self, datasetName, name):
@@ -13,10 +14,10 @@ class ExperimentCollection:
             self.collectionResults[eigenLoss] = {}
             for eigenInit, stds in eigenInits.items():
                 self.collectionResults[eigenLoss][eigenInit] = {}
+                print(f"### {eigenLoss} and {eigenInit}")
                 for std in stds:
                     runDicts = []
-                    for run in range(0, numRuns):
-                        print(f"### {eigenLoss} and {eigenInit} and {std} and {run}###")
+                    for run in tqdm(range(0, numRuns)):
                         experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName)
                         runDicts.append(experiment.run(epochs = epochs, batchSize = batchSize))
                     
@@ -106,15 +107,27 @@ def getInitFunc(distributionName):
         return initLibrary.uniformEigen
     elif distributionName == 'svdElement':
         return initLibrary.svdElement
-    elif distributionName == 'unitPerturbEigen':
+    elif distributionName == 'unitPerturb':
         return initLibrary.unitPerturb
-    elif distributionName == 'unitary':
-        return initLibrary.unitary
     
 if __name__ == "__main__":
-    expCol = ExperimentCollection('pendulum', 'pendulumDiss9_2')
-    expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
-    print(expCol.runRegime)
-    expCol.run(epochs=50, numRuns=5)
-    print(expCol.collectionResults)
-    expCol.saveResults()
+    l = [
+            ('pendulum0', 'pendulum0_overnight'), 
+            ('pendulum5', 'pendulum5_overnight'),
+            ('pendulum9', 'pendulum9_overnight'),
+            ('cyclone-limited', 'cyclone_overnight'),
+            ('ocean', 'ocean_overnight'),
+            ('fluid', 'fluid_overnight')
+        ]
+    
+    for (ds, saveName) in l:
+        expCol = ExperimentCollection(ds, saveName)
+        
+        if ds.startswith('pendulum'):      
+            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeOvernight.json')
+        else:
+            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
+        print(expCol.runRegime)
+        expCol.run(epochs=50, numRuns=15)
+        print(expCol.collectionResults)
+        expCol.saveResults()

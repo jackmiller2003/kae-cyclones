@@ -129,10 +129,7 @@ class koopmanAE(nn.Module):
         self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
         self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
         
-        if init_scheme() == 'untiary':
-            self.dynamics = dynamics(b, init_scheme, True)
-        else:
-            self.dynamics = dynamics(b, init_scheme, False)
+        self.dynamics = dynamics(b, init_scheme, False)
         self.backdynamics = dynamics_back(b, self.dynamics)
 
 
