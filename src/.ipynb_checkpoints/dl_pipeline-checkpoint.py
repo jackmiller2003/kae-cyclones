@@ -129,10 +129,10 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
             optimizer.step()
 
             if i % 100 == 99:
-                print(f"Loss: {avg_loss / (i * batch_size)}")
-                print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
-                print(f"Eigen loss: {avg_eigen_loss / (i * batch_size)}")
-                print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
+                # print(f"Loss: {avg_loss / (i * batch_size)}")
+                # print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
+                # print(f"Eigen loss: {avg_eigen_loss / (i * batch_size)}")
+                # print(np.linalg.eig(model.dynamics.dynamics.weight.cpu().detach().numpy())[0])
                 # print(f"Iden loss: {avg_iden_loss / (i * batch_size)}")
                 # print(f"Back loss: {avg_bwd_loss / (i * batch_size)}")
                 # print(f"Cons loss: {avg_cons_loss / (i * batch_size)}")
@@ -144,12 +144,12 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
         eigen_loss.append(avg_eigen_loss/(ds_length))
         losses.append(avg_loss / (ds_length))
 
-        print(f"{epoch}. {avg_loss/(ds_length)}")
-        print(f"Fwd loss: {fwd_loss}")
-        print(f"Back loss: {back_loss}")
-        print(f"Iden loss: {iden_loss}")
-        print(f"Cons loss: {cons_loss}")
-        print(f"Eigen loss: {eigen_loss}")
+        # print(f"{epoch}. {avg_loss/(ds_length)}")
+        # print(f"Fwd loss: {fwd_loss}")
+        # print(f"Back loss: {back_loss}")
+        # print(f"Iden loss: {iden_loss}")
+        # print(f"Cons loss: {cons_loss}")
+        # print(f"Eigen loss: {eigen_loss}")
         
         if koopman:
             torch.save(model.state_dict(), f'{saved_models_path}/kae-model-continued-{avg_loss/ds_length}.pt')
@@ -258,8 +258,8 @@ def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epo
             avg_loss += loss.item()
 
             if i % 100 == 99:
-                print(f"Loss: {avg_loss / (i * batch_size)}")
-                print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
+                # print(f"Loss: {avg_loss / (i * batch_size)}")
+                # print(f"Fwd loss: {avg_fwd_loss / (i * batch_size)}")
                 # print(f"Iden loss: {avg_iden_loss / (i * batch_size)}")
                 # print(f"Back loss: {avg_bwd_loss / (i * batch_size)}")
                 # print(f"Cons loss: {avg_cons_loss / (i * batch_size)}")
@@ -271,11 +271,11 @@ def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epo
         losses.append(avg_loss / (ds_length))
 
 
-        print(f"{epoch}. {avg_loss/(ds_length)}")
-        print(f"Fwd loss: {fwd_loss}")
-        print(f"Back loss: {back_loss}")
-        print(f"Iden loss: {iden_loss}")
-        print(f"Cons loss: {cons_loss}")
+        # print(f"{epoch}. {avg_loss/(ds_length)}")
+        # print(f"Fwd loss: {fwd_loss}")
+        # print(f"Back loss: {back_loss}")
+        # print(f"Iden loss: {iden_loss}")
+        # print(f"Cons loss: {cons_loss}")
 
         return fwd_loss, back_loss, iden_loss, cons_loss
 

@@ -71,10 +71,6 @@ def unitPerturb(std, matrixSize):
     
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
-def unitary(std, matrixSize):
-    
-    return 'unitary'
-
 # def gaussianElement(std, matrixSize):
 #     gaussianMatrix = gaussianElement(std, matrixSize)
 #     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
