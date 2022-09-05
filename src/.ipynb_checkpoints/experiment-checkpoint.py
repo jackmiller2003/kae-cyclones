@@ -112,12 +112,12 @@ def getInitFunc(distributionName):
     
 if __name__ == "__main__":
     l = [
-            ('pendulum0', 'pendulum0_overnight'), 
-            ('pendulum5', 'pendulum5_overnight'),
-            ('pendulum9', 'pendulum9_overnight'),
-            ('cyclone-limited', 'cyclone_overnight'),
-            ('ocean', 'ocean_overnight'),
-            ('fluid', 'fluid_overnight')
+            ('ocean', 'ocean_overnight_f'),
+            ('cyclone-limited', 'cyclone_overnight_f'),
+            ('fluid', 'fluid_overnight_f'),    
+            ('pendulum0', 'pendulum0_overnight_f'),
+            ('pendulum5', 'pendulum5_overnight_f'),
+            ('pendulum9', 'pendulum9_overnight_f')
         ]
     
     for (ds, saveName) in l:
@@ -126,8 +126,8 @@ if __name__ == "__main__":
         if ds.startswith('pendulum'):      
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeOvernight.json')
         else:
-            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
+            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeOvernight.json')
         print(expCol.runRegime)
-        expCol.run(epochs=50, numRuns=15)
+        expCol.run(epochs=150, numRuns=5)
         print(expCol.collectionResults)
         expCol.saveResults()

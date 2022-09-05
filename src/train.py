@@ -30,6 +30,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     lamb, nu, eta, alpha = 1, 1, 1e-2, 10
     loss_dict = {}
 
+    print(model.encoder.fc1)
+
     for epoch in range(epochs):
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
         

@@ -233,11 +233,11 @@ class PendulumToPendulum(Dataset):
         self.prediction_length = prediction_length
     
     def __len__(self):
-        return len(self.pendulum_array[self.dissipation_level][:500])
+        return len(self.pendulum_array[self.dissipation_level])
     
     def __getitem__(self, idx):
         i = 0
-        for pend_run in self.pendulum_array[self.dissipation_level][:500]:
+        for pend_run in self.pendulum_array[self.dissipation_level]:
             j = self.prediction_length
             for time_step in pend_run[self.prediction_length:-self.prediction_length]:
                 if i == idx:
