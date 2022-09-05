@@ -138,7 +138,7 @@ class koopmanAE(nn.Module):
         self.steps_back = 4
         self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
         self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
-        
+
         self.dynamics = dynamics(b, init_scheme, spectral_norm=spectral_norm)
         self.backdynamics = dynamics_back(b, self.dynamics)
 

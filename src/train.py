@@ -130,6 +130,10 @@ def create_dataset(dataset:str, batch_size):
         beta = 16
         learning_rate = 1e-3
 
+<<<<<<< HEAD
+    elif dataset == 'pendulum':
+        train_ds, val_ds, test_ds = generate_pendulum_ds(0)
+=======
     elif dataset == 'pendulum0':
         train_ds, val_ds, test_ds = generate_pendulum_ds(0)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
@@ -150,6 +154,7 @@ def create_dataset(dataset:str, batch_size):
     
     elif dataset == 'pendulum9':
         train_ds, val_ds, test_ds = generate_pendulum_ds(9)
+>>>>>>> d49d3371690b18d62224c4d32d83e64bda98cac6
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2
