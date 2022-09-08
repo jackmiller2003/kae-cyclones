@@ -18,15 +18,17 @@ def generate_dissipative_sets_for_pendulum(c_array):
     sols = []
     for c in tqdm(c_array):
         part_c = []
-        for start_pos in np.linspace(-math.pi,math.pi,100):
-            for start_vel in np.linspace(-1,1, 100):
+        for start_pos in np.linspace(-math.pi,math.pi,500):
+            for start_vel in np.linspace(-2,2,100):
                 sol = odeint(simple_pendulum_deriv, y0=[start_pos,start_vel], t=t_span, args=(1,9.8,1,1,0.6+c,1))
                 part_c.append(sol)
         
         sols.append(part_c)
     
     sols_array = np.array(sols)
+    noise_array = sols_array + np.random.standard_normal(sols_array.shape) * 0.1
     np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative-{args.c_domain}-{args.c_points}', sols_array)
+    np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative-noise-{args.c_domain}-{args.c_points}', noise_array)
     
     return sols_array
 
@@ -34,9 +36,9 @@ if __name__ == '__main__':
         # TRAINING ARGUMENTS
     parser = argparse.ArgumentParser(description='Autoencoder Prediction')
     #
-    parser.add_argument('--c_domain', type=float, default='2', help='domain of c values')
+    parser.add_argument('--c_domain', type=float, default='0.6', help='domain of c values')
     #
-    parser.add_argument('--c_points', type=int, default='5', help='number of points in c domain')
+    parser.add_argument('--c_points', type=int, default='10', help='number of points in c domain')
 
     args = parser.parse_args()
     c_array = np.linspace(-args.c_domain, args.c_domain, args.c_points)

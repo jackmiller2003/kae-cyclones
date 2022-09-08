@@ -50,7 +50,7 @@ class ExperimentCollection:
                     self.collectionResults[eigenLoss][eigenInit][std] = finalDict
     
     def saveResults(self):
-        with open(f"/home/156/cn1951/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
+        with open(f"/home/156/jm0124/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
 
     def plotResults(self):
@@ -82,7 +82,7 @@ class Experiment:
         self.epochs = 50
     
     def run(self, epochs=50, batchSize=128, return_model=False):
-        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr = create_dataset(self.datasetName, batchSize)
+        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr, eigenlossAlpha = create_dataset(self.datasetName, batchSize)
         init_scheme = InitScheme(self.eigenInit, self.std, beta)
 
         if self.eigenLoss == 'spectralNorm':
@@ -90,7 +90,7 @@ class Experiment:
         else:
             model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=False)
 
-        loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs)
+        loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs, eigenlossAlpha)
         if return_model: return loss_dict, model, train_ds, val_ds, train_loader, val_loader
         return loss_dict
 
@@ -132,7 +132,7 @@ def getInitFunc(distributionName):
     print(expCol.runRegime)
     expCol.run(epochs=50, numRuns=5)
     print(expCol.collectionResults)
-    expCol.saveResults() """
+    expCol.saveResults()
 
 if __name__ == "__main__":
     exp = Experiment("none", "gaussianEigen", 1.0, "pendulum")
@@ -181,16 +181,16 @@ if __name__ == "__main__":
         errors.append(np.linalg.norm(decoder_output - target) / np.linalg.norm(target))
 
     print("Errors:")
-    print(errors)
+    print(errors)"""
 
 if __name__ == "__main__":
     l = [
-            ('ocean', 'ocean_overnight_f'),
-            ('cyclone-limited', 'cyclone_overnight_f'),
-            ('fluid', 'fluid_overnight_f'),    
-            ('pendulum0', 'pendulum0_overnight_f'),
-            ('pendulum5', 'pendulum5_overnight_f'),
-            ('pendulum9', 'pendulum9_overnight_f')
+            # ('ocean', 'ocean_overnight_testing_2'),
+            # ('cyclone-limited', 'cyclone_overnight_testing_2'),
+            # ('fluid', 'fluid_overnight_testing_2'),    
+            # ('pendulum0', 'pendulum0_overnight_noise_run_100')
+            ('pendulum5', 'pendulum5_overnight_noise_run_100')
+            # ('pendulum9', 'pendulum9_overnight_noise_run_16')
         ]
     
     for (ds, saveName) in l:
@@ -201,6 +201,6 @@ if __name__ == "__main__":
         else:
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeOvernight.json')
         print(expCol.runRegime)
-        expCol.run(epochs=150, numRuns=5)
+        expCol.run(epochs=200, numRuns=1)
         print(expCol.collectionResults)
         expCol.saveResults()
