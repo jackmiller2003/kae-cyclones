@@ -229,6 +229,7 @@ def generate_fluid_u():
 class PendulumToPendulum(Dataset):
     def __init__(self, prediction_length, dissipation_level, partition_name='train'):
         self.pendulum_array = np.load(f"/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative_{partition_name}.npy")
+        np.random.shuffle(self.pendulum_array)
         self.dissipation_level = dissipation_level
         self.prediction_length = prediction_length
     

@@ -1,12 +1,10 @@
 import initLibrary
 from train import *
-<<<<<<< HEAD
+
 from models import *
 import os
 
-=======
 from tqdm import tqdm
->>>>>>> d49d3371690b18d62224c4d32d83e64bda98cac6
 
 class ExperimentCollection:
     def __init__(self, datasetName, name):
@@ -88,7 +86,7 @@ class Experiment:
         init_scheme = InitScheme(self.eigenInit, self.std, beta)
         model = create_model(alpha, beta, init_scheme, input_size)
         loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs)
-        if return_model: return loss_dict, model, train_ds, val_ds, train_loader, val_loader
+        if return_model: return model, val_ds
         return loss_dict
 
     def __str__(self):
@@ -117,70 +115,97 @@ def getInitFunc(distributionName):
     elif distributionName == 'unitPerturb':
         return initLibrary.unitPerturb
     
-<<<<<<< HEAD
-""" if __name__ == "__main__":
-    direct = os.getcwd()
-    if direct[10:16] == 'jm0124': run_path = '/home/156/jm0124/kae-cyclones/src/testingRegime.json'
-    else: run_path = '/home/156/cn1951/kae-cyclones/src/testingRegime.json'
-
-
-    expCol = ExperimentCollection('pendulum', 'pendulumDiss9_2')
-    expCol.loadRunRegime(run_path)
-    print(expCol.runRegime)
-    expCol.run(epochs=50, numRuns=5)
-    print(expCol.collectionResults)
-    expCol.saveResults() """
-
-if __name__ == "__main__":
-    exp = Experiment("none", "gaussianEigen", 1.0, "pendulum")
-    _, model, _, val_ds, _, val_loader = exp.run(epochs=100, return_model=True)
-
-    # prediction
-
-    # let's get what we're feeding in right first
-
-    # first let's see what the model expects
-
-    # see if the model can take one of these
-    encoder_output = model.encoder(val_ds[0][0][0].float().to(0))
-    print("Encoder output:")
-    print(encoder_output)
-
-    dynamics_output = model.dynamics(encoder_output)
-    print("Dynamics output:")
-    print(dynamics_output)
-
-    decoder_output = model.decoder(dynamics_output).cpu().detach().numpy()[0][0]
-    print("Decoder output:")
-    print(decoder_output)
-
-    target = val_ds[0][0][1].cpu().numpy()
-    print("Target:")
-    print(target)
-
-    error = np.linalg.norm(decoder_output - target) / np.linalg.norm(target)
-    print("Error: ")
-    print(error)
-
-    print("Length of validation DS batch:")
-    print(len(val_ds[0][0]))
-
-    print("Length of validation DS:")
-    print(len(val_ds))
-
-    predictions, errors = [val_ds[0][0][0]], []
-    for i in range(len(val_ds[0][0])-1):
+def prediction_errors(model, val_ds, pred_steps=100, starting=0):
+    predictions, errors = [val_ds[starting][0][0]], []
+    for i in range(pred_steps):
         encoder_output = model.encoder(predictions[i].float().to(0))
         dynamics_output = model.dynamics(encoder_output)
         decoder_output = model.decoder(dynamics_output).cpu().detach().numpy()[0][0]
         predictions.append(model.decoder(dynamics_output))
-        target = val_ds[0][0][i+1].cpu().numpy()
+        target = val_ds[starting+i+1][0][0].cpu().numpy()
         errors.append(np.linalg.norm(decoder_output - target) / np.linalg.norm(target))
+    return errors
 
-    print("Errors:")
-    print(errors)
-=======
+def aggregate_prediction_errors(model, val_ds, pred_steps=100):
+    error_array = []
+    for j in range(30):
+        error_array.append(prediction_errors(model, val_ds, pred_steps=pred_steps, starting=j))
+    error_array = np.asarray(error_array)
+    return error_array
+
+def plot_aggregate_prediction_errors(name, labels, error_arrays):
+    """Plots the prediction errors for a variety of different experiments (initial conditions)."""
+    fig = plt.figure(figsize=(15,12))
+    for (error_array, label) in zip(error_arrays, labels):
+        plt.plot(error_array.mean(axis=0), 'o--', lw=3, label=label)
+        #plt.fill_between(x=range(error_array.shape[1]),
+                        #y1=np.quantile(error_array, .20, axis=0), 
+                        #y2=np.quantile(error_array, .80, axis=0), alpha=0.2)
+
+    plt.tick_params(axis='x', labelsize=22)
+    plt.tick_params(axis='y', labelsize=22)
+    plt.locator_params(axis='y', nbins=10)
+    plt.locator_params(axis='x', nbins=10)
+
+    plt.ylabel('Relative prediction error', fontsize=22)
+    plt.xlabel('Time step', fontsize=22)
+    plt.grid(False)
+    plt.ylim([0.0,error_array.max()*2])
+    fig.tight_layout()
+    plt.legend(loc="best", prop={'size': 22})
+    plt.savefig(name +'.png')
+    plt.close()
+
+
+def plot_errors(errors, name):
+    """Plots a single experiment's prediction errors (unaggregated)."""
+    error = np.asarray(errors)
+    fig = plt.figure(figsize=(15,12))
+    x = np.arange(1, len(errors)+1)
+    plt.plot(x, error, 'o--', lw=3, label='', color='#377eb8')
+
+    plt.tick_params(axis='x', labelsize=22)
+    plt.tick_params(axis='y', labelsize=22)
+    plt.locator_params(axis='y', nbins=10)
+    plt.locator_params(axis='x', nbins=10)
+
+    plt.ylabel('Relative prediction error', fontsize=22)
+    plt.xlabel('Time step', fontsize=22)
+    plt.grid(False)
+    #plt.ylim(0.0,1.0)
+    fig.tight_layout()
+    plt.savefig(name +'.png', dpi=300)
+    plt.show()
+
+
 if __name__ == "__main__":
+    # GAUSSIAN ELEMENT
+    ge_exp = Experiment("none", "gaussianElement", 1.0, "ocean")
+    ge_model, ge_val_ds = ge_exp.run(epochs=10, return_model=True)
+    ge_array = aggregate_prediction_errors(ge_model, ge_val_ds)
+    # GAUSSIAN EIGEN
+    eigen_exp = Experiment("none", "gaussianEigen", 1.0, "ocean")
+    eigen_model, eigen_val_ds = eigen_exp.run(epochs=75, return_model=True)
+    eigen_array = aggregate_prediction_errors(eigen_model, eigen_val_ds)
+
+    # UNIFORM EIGEN
+    unif_exp = Experiment("none", "uniformEigen", 1.0, "ocean")
+    unif_model, unif_val_ds = unif_exp.run(epochs=75, return_model=True)
+    unif_array = aggregate_prediction_errors(unif_model, unif_val_ds)
+
+    # UNIT PERTURB
+    unit_exp = Experiment("none", "unitPerturb", 1.0, "ocean")
+    unit_model, unit_val_ds = unit_exp.run(epochs=75, return_model=True)
+    unit_array = aggregate_prediction_errors(unit_model, unit_val_ds)
+
+
+    # plot all prediction errors
+    plot_aggregate_prediction_errors("aggregate_ocean_errors", 
+                                     ["gaussianEigen", "uniformEigen", "unitPerturb", "gaussianElement"], 
+                                     [eigen_array, unif_array, unit_array, ge_array])
+
+    
+""" if __name__ == "__main__":
     l = [
             ('pendulum0', 'pendulum0_overnight'), 
             ('pendulum5', 'pendulum5_overnight'),
@@ -201,4 +226,4 @@ if __name__ == "__main__":
         expCol.run(epochs=50, numRuns=15)
         print(expCol.collectionResults)
         expCol.saveResults()
->>>>>>> d49d3371690b18d62224c4d32d83e64bda98cac6
+>>>>>>> d49d3371690b18d62224c4d32d83e64bda98cac6 """
