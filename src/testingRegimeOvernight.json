@@ -9,11 +9,6 @@
         "gaussianElement":["1e0"]
     },
     "none":{
-        "gaussianElement":["1e0"],
-        "gaussianEigen":["1e0"],
-        "doubleGaussianEigen":["1e0"],
-        "uniformEigen":["1e0"],
-        "svdElement":["1e0"],
-        "unitPerturb":["1e0"]
+        "gaussianElement":["1e0"]
     }
 }

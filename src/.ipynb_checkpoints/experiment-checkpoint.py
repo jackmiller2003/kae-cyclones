@@ -50,7 +50,7 @@ class ExperimentCollection:
                     self.collectionResults[eigenLoss][eigenInit][std] = finalDict
     
     def saveResults(self):
-        with open(f"/home/156/cn1951/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
+        with open(f"/home/156/jm0124/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
 
     def plotResults(self):
@@ -82,11 +82,22 @@ class Experiment:
         self.epochs = 50
     
     def run(self, epochs=50, batchSize=128, return_model=False):
-        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr = create_dataset(self.datasetName, batchSize)
+        train_ds, val_ds, _, train_loader, val_loader, input_size, alpha, beta, lr, eigenlossAlpha = create_dataset(self.datasetName, batchSize)
         init_scheme = InitScheme(self.eigenInit, self.std, beta)
+<<<<<<< HEAD
         model = create_model(alpha, beta, init_scheme, input_size)
         loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs)
         if return_model: return model, val_ds
+=======
+
+        if self.eigenLoss == 'spectralNorm':
+            model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=True)
+        else:
+            model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=False)
+
+        loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs, eigenlossAlpha)
+        if return_model: return loss_dict, model, train_ds, val_ds, train_loader, val_loader
+>>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546
         return loss_dict
 
     def __str__(self):
@@ -115,9 +126,65 @@ def getInitFunc(distributionName):
     elif distributionName == 'unitPerturb':
         return initLibrary.unitPerturb
     
+<<<<<<< HEAD
 def prediction_errors(model, val_ds, pred_steps=100, starting=0):
     predictions, errors = [val_ds[starting][0][0]], []
     for i in range(pred_steps):
+=======
+
+""" if __name__ == "__main__":
+    direct = os.getcwd()
+    if direct[10:16] == 'jm0124': run_path = '/home/156/jm0124/kae-cyclones/src/testingRegime.json'
+    else: run_path = '/home/156/cn1951/kae-cyclones/src/testingRegime.json'
+
+
+    expCol = ExperimentCollection('pendulum', 'pendulumDiss9_2')
+    expCol.loadRunRegime(run_path)
+    print(expCol.runRegime)
+    expCol.run(epochs=50, numRuns=5)
+    print(expCol.collectionResults)
+    expCol.saveResults()
+
+if __name__ == "__main__":
+    exp = Experiment("none", "gaussianEigen", 1.0, "pendulum")
+    _, model, _, val_ds, _, val_loader = exp.run(epochs=100, return_model=True)
+
+    # prediction
+
+    # let's get what we're feeding in right first
+
+    # first let's see what the model expects
+
+    # see if the model can take one of these
+    encoder_output = model.encoder(val_ds[0][0][0].float().to(0))
+    print("Encoder output:")
+    print(encoder_output)
+
+    dynamics_output = model.dynamics(encoder_output)
+    print("Dynamics output:")
+    print(dynamics_output)
+
+    decoder_output = model.decoder(dynamics_output).cpu().detach().numpy()[0][0]
+    print("Decoder output:")
+    print(decoder_output)
+
+    target = val_ds[0][0][1].cpu().numpy()
+    print("Target:")
+    print(target)
+
+    error = np.linalg.norm(decoder_output - target) / np.linalg.norm(target)
+    print("Error: ")
+    print(error)
+
+    print("Length of validation DS batch:")
+    print(len(val_ds[0][0]))
+
+    print("Length of validation DS:")
+    print(len(val_ds))
+
+    predictions, errors = [val_ds[0][0][0]], []
+    for i in range(len(val_ds[0][0])-1):
+>>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546
         encoder_output = model.encoder(predictions[i].float().to(0))
         dynamics_output = model.dynamics(encoder_output)
         decoder_output = model.decoder(dynamics_output).cpu().detach().numpy()[0][0]
@@ -178,6 +245,12 @@ def plot_errors(errors, name):
     plt.show()
 
 
+<<<<<<< HEAD
+=======
+    print("Errors:")
+    print(errors)"""
+
+>>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546
 if __name__ == "__main__":
     # GAUSSIAN ELEMENT
     ge_exp = Experiment("none", "gaussianElement", 1.0, "ocean")
@@ -207,12 +280,12 @@ if __name__ == "__main__":
     
 """ if __name__ == "__main__":
     l = [
-            ('pendulum0', 'pendulum0_overnight'), 
-            ('pendulum5', 'pendulum5_overnight'),
-            ('pendulum9', 'pendulum9_overnight'),
-            ('cyclone-limited', 'cyclone_overnight'),
-            ('ocean', 'ocean_overnight'),
-            ('fluid', 'fluid_overnight')
+            # ('ocean', 'ocean_overnight_testing_2'),
+            # ('cyclone-limited', 'cyclone_overnight_testing_2'),
+            # ('fluid', 'fluid_overnight_testing_2'),    
+            # ('pendulum0', 'pendulum0_overnight_noise_run_100')
+            ('pendulum5', 'pendulum5_overnight_noise_run_100')
+            # ('pendulum9', 'pendulum9_overnight_noise_run_16')
         ]
     
     for (ds, saveName) in l:
@@ -221,9 +294,12 @@ if __name__ == "__main__":
         if ds.startswith('pendulum'):      
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeOvernight.json')
         else:
-            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegime.json')
+            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeOvernight.json')
         print(expCol.runRegime)
-        expCol.run(epochs=50, numRuns=15)
+        expCol.run(epochs=200, numRuns=1)
         print(expCol.collectionResults)
         expCol.saveResults()
+<<<<<<< HEAD
 >>>>>>> d49d3371690b18d62224c4d32d83e64bda98cac6 """
+=======
+>>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546

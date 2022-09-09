@@ -195,9 +195,9 @@ class OceanToOcean(Dataset):
                 i += 1
                 
 def generate_ocean_ds():
-    train_ds = OceanToOcean(4, 'train')
-    val_ds = OceanToOcean(4, 'valid')
-    test_ds = OceanToOcean(4, 'test')
+    train_ds = OceanToOcean(8, 'train')
+    val_ds = OceanToOcean(8, 'valid')
+    test_ds = OceanToOcean(8, 'test')
 
     return train_ds, val_ds, test_ds
 
@@ -206,6 +206,9 @@ class FluidToFluid(Dataset):
     def __init__(self, prediction_length, partition_name='train', fluid_val='u'):
         self.fluid_array = np.load(f'/g/data/x77/jm0124/fluids/{partition_name}_{fluid_val}.npy')
         self.prediction_length = prediction_length
+
+        if partition_name == 'train':
+            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.4
     
     def __len__(self):
         return self.fluid_array.shape[0] - 2*self.prediction_length
@@ -234,11 +237,11 @@ class PendulumToPendulum(Dataset):
         self.prediction_length = prediction_length
     
     def __len__(self):
-        return len(self.pendulum_array[self.dissipation_level][:500])
+        return len(self.pendulum_array[self.dissipation_level])
     
     def __getitem__(self, idx):
         i = 0
-        for pend_run in self.pendulum_array[self.dissipation_level][:500]:
+        for pend_run in self.pendulum_array[self.dissipation_level]:
             j = self.prediction_length
             for time_step in pend_run[self.prediction_length:-self.prediction_length]:
                 if i == idx:
@@ -247,9 +250,9 @@ class PendulumToPendulum(Dataset):
                 i += 1
 
 def generate_pendulum_ds(dissipation_level):
-    train_ds = PendulumToPendulum(4, dissipation_level, 'train')
-    val_ds = PendulumToPendulum(4, dissipation_level, 'valid')
-    test_ds = PendulumToPendulum(4, dissipation_level, 'test')
+    train_ds = PendulumToPendulum(96, dissipation_level, 'train')
+    val_ds = PendulumToPendulum(96, dissipation_level, 'valid')
+    test_ds = PendulumToPendulum(96, dissipation_level, 'test')
 
     return train_ds, val_ds, test_ds
 

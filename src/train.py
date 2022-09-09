@@ -21,14 +21,17 @@ if direct[10:16] == 'jm0124':
 else:
     saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
 
-def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs):
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs, eigenlossAlpha):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     criterion = nn.MSELoss().to(device)
     model.to(device)
     model.train()
     model.to(device)
-    lamb, nu, eta, alpha = 1, 1, 1e-2, 10
+    lamb, nu, eta = 1, 1, 1e-2
+    alpha = eigenlossAlpha
     loss_dict = {}
+
+    print(model.encoder.fc1)
 
     for epoch in range(epochs):
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
@@ -62,10 +65,9 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 #A = model.dynamics.dynamics.weight.cpu().detach().numpy()
                 #w, _ = np.linalg.eig(A)
                 w = torch.linalg.eigvals(model.dynamics.dynamics.weight)
-                if eigenLoss == 'max': w_pen = np.max(np.absolute(w))
-                elif eigenLoss == 'average': w_pen = np.average(np.absolute(w))
-                elif eigenLoss == 'inverse': w_pen = 1/np.min(np.absolute(w))
-                elif eigenLoss == 'unit_circle': w_pen = torch.nn.MSELoss()(torch.abs(w), torch.ones(w.shape).to(w.device))
+                if eigenLoss == 'origin_mse': w_pen = torch.nn.L1Loss()(torch.abs(w), torch.zeros(w.shape).to(w.device))
+                elif eigenLoss == 'unit_circle_mae': w_pen = torch.nn.L1Loss()(torch.abs(w), torch.ones(w.shape).to(w.device))
+                elif eigenLoss == 'unit_circle_mse': w_pen = torch.nn.MSELoss()(torch.abs(w), torch.ones(w.shape).to(w.device))
                 else: w_pen = torch.tensor(1)
                 closs += alpha * w_pen
                 ceigen += alpha * w_pen
@@ -116,6 +118,7 @@ def create_model(alpha, beta, init_scheme, input_size):
     return model_dae
 
 def create_dataset(dataset:str, batch_size):
+    print(dataset)
     "Build a dataset based on the problem type."
     if dataset.startswith('cyclone'):
         if dataset == 'cyclone': train_ds, val_ds, test_ds = generate_example_dataset()
@@ -127,11 +130,15 @@ def create_dataset(dataset:str, batch_size):
         alpha = 16
         beta = 16
         learning_rate = 1e-3
+        eigenlossHyper = 5e2
 
+<<<<<<< HEAD
 
     elif dataset == 'pendulum':
         train_ds, val_ds, test_ds = generate_pendulum_ds(0)
 
+=======
+>>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546
     elif dataset == 'pendulum0':
         train_ds, val_ds, test_ds = generate_pendulum_ds(0)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
@@ -140,6 +147,7 @@ def create_dataset(dataset:str, batch_size):
         alpha = 4
         beta = 4
         learning_rate = 1e-5
+        eigenlossHyper = 1e2
     
     elif dataset == 'pendulum5':
         train_ds, val_ds, test_ds = generate_pendulum_ds(5)
@@ -149,6 +157,7 @@ def create_dataset(dataset:str, batch_size):
         alpha = 4
         beta = 4
         learning_rate = 1e-5
+        eigenlossHyper = 5e1
     
     elif dataset == 'pendulum9':
         train_ds, val_ds, test_ds = generate_pendulum_ds(9)
@@ -158,6 +167,7 @@ def create_dataset(dataset:str, batch_size):
         alpha = 4
         beta = 4
         learning_rate = 1e-5
+        eigenlossHyper = 5e1
             
     elif dataset == 'ocean':
         train_ds, val_ds, test_ds = generate_ocean_ds()
@@ -167,6 +177,7 @@ def create_dataset(dataset:str, batch_size):
         alpha = 16
         beta = 16
         learning_rate = 1e-4
+        eigenlossHyper = 2
         
     elif dataset == 'fluid':
         train_ds, val_ds, test_ds = generate_fluid_u()
@@ -176,5 +187,6 @@ def create_dataset(dataset:str, batch_size):
         alpha = 64
         beta = 16
         learning_rate = 1e-4
+        eigenlossHyper = 10
 
-    return train_ds, val_ds, test_ds, loader, val_loader, input_size, alpha, beta, learning_rate
+    return train_ds, val_ds, test_ds, loader, val_loader, input_size, alpha, beta, learning_rate, eigenlossHyper
