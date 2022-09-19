@@ -35,8 +35,8 @@ class CycloneToCycloneDataset(Dataset):
     def __len__(self):
         length = 0
         for cyclone, data in self.tracks_dict.items():
-            if len(data['coordinates']) > 2*self.prediction_length:
-                length += len(data['coordinates'][self.prediction_length:-self.prediction_length])
+            if len(data['coordinates']) > self.prediction_length:
+                length += len(data['coordinates'][0:-self.prediction_length])
         
         return length
 
@@ -44,16 +44,16 @@ class CycloneToCycloneDataset(Dataset):
         i = 0
 
         for cyclone, data in self.tracks_dict.items():
-            j = self.prediction_length
+            j = 0
 
-            if len(data['coordinates']) > 2*self.prediction_length:
-                for coordinate in data['coordinates'][self.prediction_length:-self.prediction_length]:
+            if len(data['coordinates']) > self.prediction_length:
+                for coordinate in data['coordinates'][0:-self.prediction_length]:
                     if i == idx:
                         if self.save_np:
                             cyclone_ds = xarray.open_dataset(self.cyclone_dir+cyclone+".nc", 
                             engine='netcdf4', decode_cf=True, cache=True) # parallel, cunk
 
-                            cyclone_ds = cyclone_ds[dict(time=list(range(-self.prediction_length+j, self.prediction_length+j)),
+                            cyclone_ds = cyclone_ds[dict(time=list(range(j, self.prediction_length+j)),
                                                     level=self.pressure_levels)][self.atmospheric_values]
 
                             cyclone_array = cyclone_ds.to_array().to_numpy()
@@ -66,7 +66,8 @@ class CycloneToCycloneDataset(Dataset):
                                 size = 20
 
                             cyclone_array = cyclone_array.transpose((1,0,2,3,4))
-                            cyclone_array = cyclone_array.reshape(self.prediction_length*2, -1, size, size)                          
+                            cyclone_array = cyclone_array.reshape(self.prediction_length, -1, size, size)
+                            np.save(f'/g/data/x77/jm0124/np_cyclones_crop/{self.prediction_length}/{self.partition_name}/{cyclone}-{j}.npy', cyclone_array)
 
                             return (cyclone_array, cyclone, j)
 
@@ -195,11 +196,11 @@ class OceanToOcean(Dataset):
                 i += 1
                 
 def generate_ocean_ds():
-    train_ds = OceanToOcean(8, 'train')
-    val_ds = OceanToOcean(8, 'valid')
-    test_ds = OceanToOcean(8, 'test')
+    train_ds = OceanToOcean(30, 'train')
+    val_ds = OceanToOcean(30, 'valid')
+    test_ds = OceanToOcean(30, 'test')
 
-    return train_ds, val_ds, test_ds
+    return train_ds, val_ds, test_ds, 30
 
 class FluidToFluid(Dataset):
 
@@ -208,30 +209,30 @@ class FluidToFluid(Dataset):
         self.prediction_length = prediction_length
 
         if partition_name == 'train':
-            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.4
+            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.7
     
     def __len__(self):
-        return self.fluid_array.shape[0] - 2*self.prediction_length
+        return self.fluid_array.shape[0] - self.prediction_length
     
     def __getitem__(self,idx):
-        j = self.prediction_length
-        for i in range(0,self.fluid_array.shape[0] - 2*self.prediction_length):
+        j = 0
+        for i in range(0,self.fluid_array.shape[0] - self.prediction_length):
             if i == idx:
-                array = self.fluid_array[j-self.prediction_length:j+self.prediction_length]
-                reverse_array = np.flip(self.fluid_array[j-self.prediction_length:j+self.prediction_length]).copy()
+                array = self.fluid_array[j:j+self.prediction_length]
+                reverse_array = np.flip(self.fluid_array[j:j+self.prediction_length]).copy()
                 return torch.from_numpy(array), torch.from_numpy(reverse_array)
             j += 1
 
 def generate_fluid_u():
-    train_ds = FluidToFluid(4, 'train', 'u')
-    val_ds = FluidToFluid(4, 'valid', 'u')
-    test_ds = FluidToFluid(4, 'test', 'u')
+    train_ds = FluidToFluid(16, 'train', 'u')
+    val_ds = FluidToFluid(16, 'valid', 'u')
+    test_ds = FluidToFluid(16, 'test', 'u')
 
-    return train_ds, val_ds, test_ds
+    return train_ds, val_ds, test_ds, 16
 
 class PendulumToPendulum(Dataset):
     def __init__(self, prediction_length, dissipation_level, partition_name='train'):
-        self.pendulum_array = np.load(f"/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative_{partition_name}.npy")
+        self.pendulum_array = np.load(f"/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative_{partition_name}_long.npy")
         self.dissipation_level = dissipation_level
         self.prediction_length = prediction_length
     
@@ -248,12 +249,12 @@ class PendulumToPendulum(Dataset):
                 j += 1
                 i += 1
 
-def generate_pendulum_ds(dissipation_level):
-    train_ds = PendulumToPendulum(96, dissipation_level, 'train')
-    val_ds = PendulumToPendulum(96, dissipation_level, 'valid')
-    test_ds = PendulumToPendulum(96, dissipation_level, 'test')
+def generate_pendulum_ds(dissipation_level, prediction_horizon=96):
+    train_ds = PendulumToPendulum(prediction_horizon, dissipation_level, 'train')
+    val_ds = PendulumToPendulum(prediction_horizon, dissipation_level, 'valid')
+    test_ds = PendulumToPendulum(prediction_horizon, dissipation_level, 'test')
 
-    return train_ds, val_ds, test_ds
+    return train_ds, val_ds, test_ds, prediction_horizon
 
 class LimitedDs(Dataset):
     def __init__(self, other_ds, length):
@@ -269,9 +270,9 @@ class LimitedDs(Dataset):
 def generate_limited_cyclones():
     train_ds, val_ds, test_ds = generate_example_dataset()
 
-    a = LimitedDs(other_ds=train_ds, length=1000)
+    a = LimitedDs(other_ds=train_ds, length=4000)
 
-    return LimitedDs(other_ds=train_ds, length=1000), LimitedDs(other_ds=val_ds, length=1000), LimitedDs(other_ds=test_ds, length=1000)
+    return LimitedDs(other_ds=train_ds, length=15000), LimitedDs(other_ds=val_ds, length=4000), LimitedDs(other_ds=test_ds, length=4000), 24
 
 def generate_example_dataset():
     """
@@ -279,11 +280,11 @@ def generate_example_dataset():
                 load_np=True, save_np=False, partition_name='train', crop=True
     """
 
-    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 4,
+    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 24,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='train')
-    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 4,
+    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 24,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='valid')
-    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 4,
+    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 24,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='test')
 
     return train_ds, val_ds, test_ds

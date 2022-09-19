@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from initLibrary import *
 from experiment import *
 from eunn import EUNN
+import torch.nn.utils.parametrizations as tparam
 
 def gaussian_init_(n_units, std=1):    
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
@@ -40,13 +41,18 @@ def eigen_init_(n_units, distribution='uniform',std=1, maxmin=2):
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 class encoderNetSimple(nn.Module):
-    def __init__(self, alpha, b, input_size=2):
+    def __init__(self, alpha, b, input_size=2, spectral_norm=False):
         super(encoderNetSimple, self).__init__()
         self.input_size = input_size
 
-        self.fc1 = nn.Linear(self.input_size, 16 * alpha)
-        self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
-        self.fc3 = nn.Linear(16 * alpha, b)
+        if spectral_norm:
+            self.fc1 = tparam.spectral_norm(nn.Linear(self.input_size, 16 * alpha))
+            self.fc2 = tparam.spectral_norm(nn.Linear(16 * alpha, 16 * alpha))
+            self.fc3 = tparam.spectral_norm(nn.Linear(16 * alpha, b))
+        else:
+            self.fc1 = nn.Linear(self.input_size, 16 * alpha)
+            self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
+            self.fc3 = nn.Linear(16 * alpha, b)
 
         self.init_weights()
 
@@ -66,15 +72,20 @@ class encoderNetSimple(nn.Module):
         return x
 
 class decoderNetSimple(nn.Module):
-    def __init__(self, alpha, b, input_size=2):
+    def __init__(self, alpha, b, spectral_norm=False, input_size=2):
         super(decoderNetSimple, self).__init__()
         self.b = b
 
         self.input_size = input_size
 
-        self.fc1 = nn.Linear(b, 16 * alpha)
-        self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
-        self.fc3 = nn.Linear(16 * alpha, self.input_size)        
+        if spectral_norm:
+            self.fc1 = tparam.spectral_norm(nn.Linear(b, 16 * alpha))
+            self.fc2 = tparam.spectral_norm(nn.Linear(16 * alpha, 16 * alpha))
+            self.fc3 = tparam.spectral_norm(nn.Linear(16 * alpha, self.input_size))
+        else:
+            self.fc1 = nn.Linear(b, 16 * alpha)
+            self.fc2 = nn.Linear(16 * alpha, 16 * alpha)
+            self.fc3 = nn.Linear(16 * alpha, self.input_size)      
 
         self.init_weights()
 
@@ -97,18 +108,17 @@ class decoderNetSimple(nn.Module):
             return x.view(-1, 1, self.input_size)
 
 class dynamics(nn.Module):
-    def __init__(self, b, init_scheme, unitary=False):
+    def __init__(self, b, init_scheme, spectral_norm=False):
         super(dynamics, self).__init__()
-        if unitary: self.dynamics = EUNN(b)
+        if spectral_norm:
+            self.dynamics = tparam.spectral_norm(nn.Linear(b, b, bias=False))
         else:
             self.dynamics = nn.Linear(b, b, bias=False)
-            self.dynamics.weight.data = init_scheme()
-        self.unitary = unitary
+        
+        self.dynamics.weight.data = init_scheme()
 
     def forward(self, x):
-        if self.unitary: x = self.dynamics(x)[:,:,0]
-        else:
-            x = self.dynamics(x)
+        x = self.dynamics(x)
         return x
 
 class dynamics_back(nn.Module):
@@ -122,59 +132,15 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
-    def __init__(self, init_scheme, b, alpha = 4, input_size=400):
-        super(koopmanAE, self).__init__()
-        self.steps = 4
-        self.steps_back = 4
-        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
-        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
-        
-        if init_scheme() == 'untiary':
-            self.dynamics = dynamics(b, init_scheme, True)
-        else:
-            self.dynamics = dynamics(b, init_scheme, False)
-        self.backdynamics = dynamics_back(b, self.dynamics)
-
-
-    def forward(self, x, mode='forward'):
-        out = []
-        out_back = []
-        z = self.encoder(x.contiguous())
-        q = z.contiguous()
-
-        
-        if mode == 'forward':
-            for _ in range(self.steps):
-                q = self.dynamics(q)
-                out.append(self.decoder(q))
-
-            out.append(self.decoder(z.contiguous())) 
-            return out, out_back    
-
-        if mode == 'backward':
-            for _ in range(self.steps_back):
-                q = self.backdynamics(q)
-                out_back.append(self.decoder(q))
-                
-            out_back.append(self.decoder(z.contiguous()))
-            return out, out_back
-
-class koopmanAE2(nn.Module):
-    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
+    def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False, steps=4):
         super(koopmanAE, self).__init__()
         self.steps = steps
-        self.steps_back = steps_back
+        self.steps_back = 4
+        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
+        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
 
-        if simple:
-            self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
-            self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
-        else:
-            self.encoder = encoderNet(alpha = alpha, b=b)
-            self.decoder = decoderNet(alpha = alpha, b=b)
-        
-        self.dynamics = dynamics(b, init_scale, eigen_init=eigen_init, maxmin=maxmin, eigen_distribution=eigen_distribution, std=std)
+        self.dynamics = dynamics(b, init_scheme, spectral_norm=spectral_norm)
         self.backdynamics = dynamics_back(b, self.dynamics)
-        self.print_hidden = print_hidden
 
 
     def forward(self, x, mode='forward'):

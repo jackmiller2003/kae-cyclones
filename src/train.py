@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import dataset_generation
 import csv
+import time
 
 direct = os.getcwd()
 if direct[10:16] == 'jm0124':
@@ -31,9 +32,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     alpha = eigenlossAlpha
     loss_dict = {}
 
-    print(model.encoder.fc1)
-
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
         
         for i, cyclone_array_list in enumerate(train_loader):
@@ -50,8 +49,8 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                         loss_fwd = criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
                     else:
                         loss_fwd += criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
-
-                loss_identity = criterion(out[-1], cyclone_array[0].unsqueeze(0).to(device)) * model.steps
+                        
+                loss_identity = 0
 
                 loss_bwd, loss_consist, loss_bwd, loss_consist = 0, 0, 0, 0
                     
@@ -86,14 +85,14 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
 
         if loss_dict == {}:
             loss_dict['loss'] = [avg_loss.cpu().item()/train_size]
-            loss_dict['iden'] = [avg_iden_loss.cpu().item()/train_size]
+            loss_dict['iden'] = [0]
             loss_dict['fwd'] = [avg_fwd_loss.cpu().item()/train_size]
             loss_dict['bwd'] = [avg_bwd_loss/train_size]
             loss_dict['cons'] = [avg_cons_loss/train_size]
             loss_dict['eigen'] = [avg_eigen_loss.cpu().item()/train_size]
         else:
             loss_dict['loss'].append(avg_loss.cpu().item()/train_size)
-            loss_dict['iden'].append(avg_iden_loss.cpu().item()/train_size)
+            loss_dict['iden'].append(0)
             loss_dict['fwd'].append(avg_fwd_loss.cpu().item()/train_size)
             loss_dict['bwd'].append(avg_bwd_loss/train_size)
             loss_dict['cons'].append(avg_cons_loss/train_size)
@@ -103,7 +102,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
         # print(w)
         # print(f"Eigenloss: {avg_eigen_loss/train_size}")
             
-        forward_val = eval_models(model, val_loader, val_size, koopman=True)[0][0]
+        forward_val = eval_models(model, val_loader, val_size)
 
         if epoch == 0:
             loss_dict['fwd_val'] = [forward_val]
@@ -112,6 +111,32 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     
     return loss_dict
 
+def test_accuracy(model, device, test_loader, step_legnth):
+    criterion = nn.MSELoss().to(device)
+    model.eval()
+    model.steps = step_legnth
+    errors = []
+    for i, cyclone_array_list in enumerate(test_loader):
+        error_sequence = np.zeros(model.steps-1)
+        closs, cfwd, cbwd, ciden, ccons, ceigen = 0, 0, 0, 0, 0, 0
+
+        for data in cyclone_array_list:
+            cyclone_array = data[0].float().to(device)
+            reversed_array = data[1].float().to(device)
+
+            out, out_back = model(x=cyclone_array[0].unsqueeze(0).to(device), mode='forward')
+            
+            for k in range(model.steps-1):
+                error_sequence[k] = criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
+        
+        errors.append(error_sequence)
+    
+    errors = np.array(errors)
+    print(errors.shape)
+    
+    return np.average(errors, axis=0), np.std(errors, axis=0) 
+    
+    
 def create_model(alpha, beta, init_scheme, input_size):
     "Creates a model after instantiating a dataset."
     model_dae = koopmanAE(init_scheme, b=beta, alpha=alpha, input_size=input_size).to(0)
@@ -123,27 +148,93 @@ def create_dataset(dataset:str, batch_size):
     if dataset.startswith('cyclone'):
         if dataset == 'cyclone': train_ds, val_ds, test_ds = generate_example_dataset()
         elif dataset == 'cyclone-limited':
-            train_ds, val_ds, test_ds = generate_limited_cyclones()
+            train_ds, val_ds, test_ds, test_steps = generate_limited_cyclones()
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 400
         alpha = 16
         beta = 16
-        learning_rate = 1e-3
-        eigenlossHyper = 5e2
+        learning_rate = 5e-4
+        eigenlossHyper = 2e2
 
-    elif dataset == 'pendulum0':
-        train_ds, val_ds, test_ds = generate_pendulum_ds(0)
+    elif dataset == 'pendulum0-200':
+        train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 200)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 1e2
+        
+    elif dataset == 'pendulum0-100':
+        train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 100)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 1e2
+    
+    elif dataset == 'pendulum0-64':
+        train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 64)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 1e2
+    
+    elif dataset == 'pendulum0-30':
+        train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 30)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 3e1
+    
+    elif dataset == 'pendulum0-20':
+        train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 20)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-5
+        eigenlossHyper = 1e2
+        
+    elif dataset == 'pendulum3':
+        train_ds, val_ds, test_ds = generate_pendulum_ds(3)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2
         alpha = 4
         beta = 4
         learning_rate = 1e-5
-        eigenlossHyper = 1e2
+        eigenlossHyper = 5e1
     
     elif dataset == 'pendulum5':
         train_ds, val_ds, test_ds = generate_pendulum_ds(5)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 2
+        alpha = 4
+        beta = 4
+        learning_rate = 1e-5
+        eigenlossHyper = 5e1
+    
+    elif dataset == 'pendulum7':
+        train_ds, val_ds, test_ds = generate_pendulum_ds(7)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2
@@ -163,9 +254,10 @@ def create_dataset(dataset:str, batch_size):
         eigenlossHyper = 5e1
             
     elif dataset == 'ocean':
-        train_ds, val_ds, test_ds = generate_ocean_ds()
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 150
         alpha = 16
         beta = 16
@@ -173,13 +265,14 @@ def create_dataset(dataset:str, batch_size):
         eigenlossHyper = 2
         
     elif dataset == 'fluid':
-        train_ds, val_ds, test_ds = generate_fluid_u()
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 89351
-        alpha = 64
+        alpha = 16
         beta = 16
-        learning_rate = 1e-4
+        learning_rate = 5e-4
         eigenlossHyper = 10
 
-    return train_ds, val_ds, test_ds, loader, val_loader, input_size, alpha, beta, learning_rate, eigenlossHyper
+    return train_ds, val_ds, test_ds, loader, val_loader, test_loader, test_steps, input_size, alpha, beta, learning_rate, eigenlossHyper
