@@ -195,9 +195,9 @@ class OceanToOcean(Dataset):
                 i += 1
                 
 def generate_ocean_ds():
-    train_ds = OceanToOcean(8, 'train')
-    val_ds = OceanToOcean(8, 'valid')
-    test_ds = OceanToOcean(8, 'test')
+    train_ds = OceanToOcean(32, 'train')
+    val_ds = OceanToOcean(32, 'valid')
+    test_ds = OceanToOcean(32, 'test')
 
     return train_ds, val_ds, test_ds
 
@@ -206,12 +206,9 @@ class FluidToFluid(Dataset):
     def __init__(self, prediction_length, partition_name='train', fluid_val='u'):
         self.fluid_array = np.load(f'/g/data/x77/jm0124/fluids/{partition_name}_{fluid_val}.npy')
         self.prediction_length = prediction_length
-<<<<<<< HEAD
-=======
 
         if partition_name == 'train':
-            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.4
->>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546
+            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 1.0
     
     def __len__(self):
         return self.fluid_array.shape[0] - 2*self.prediction_length
@@ -226,9 +223,9 @@ class FluidToFluid(Dataset):
             j += 1
 
 def generate_fluid_u():
-    train_ds = FluidToFluid(4, 'train', 'u')
-    val_ds = FluidToFluid(4, 'valid', 'u')
-    test_ds = FluidToFluid(4, 'test', 'u')
+    train_ds = FluidToFluid(8, 'train', 'u')
+    val_ds = FluidToFluid(8, 'valid', 'u')
+    test_ds = FluidToFluid(8, 'test', 'u')
 
     return train_ds, val_ds, test_ds
 
@@ -240,15 +237,11 @@ class PendulumToPendulum(Dataset):
         self.prediction_length = prediction_length
     
     def __len__(self):
-<<<<<<< HEAD
-        return len(self.pendulum_array[self.dissipation_level][:500])
-=======
         return len(self.pendulum_array[self.dissipation_level])
->>>>>>> 89e1e2c6e4082bcd65896a04ed908e9c90da2546
     
     def __getitem__(self, idx):
         i = 0
-        for pend_run in self.pendulum_array[self.dissipation_level][:500]:
+        for pend_run in self.pendulum_array[self.dissipation_level]:
             j = self.prediction_length
             for time_step in pend_run[self.prediction_length:-self.prediction_length]:
                 if i == idx:

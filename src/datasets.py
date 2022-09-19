@@ -195,9 +195,9 @@ class OceanToOcean(Dataset):
                 i += 1
                 
 def generate_ocean_ds():
-    train_ds = OceanToOcean(8, 'train')
-    val_ds = OceanToOcean(8, 'valid')
-    test_ds = OceanToOcean(8, 'test')
+    train_ds = OceanToOcean(32, 'train')
+    val_ds = OceanToOcean(32, 'valid')
+    test_ds = OceanToOcean(32, 'test')
 
     return train_ds, val_ds, test_ds
 
@@ -208,7 +208,7 @@ class FluidToFluid(Dataset):
         self.prediction_length = prediction_length
 
         if partition_name == 'train':
-            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.4
+            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 1.0
     
     def __len__(self):
         return self.fluid_array.shape[0] - 2*self.prediction_length
@@ -223,9 +223,9 @@ class FluidToFluid(Dataset):
             j += 1
 
 def generate_fluid_u():
-    train_ds = FluidToFluid(4, 'train', 'u')
-    val_ds = FluidToFluid(4, 'valid', 'u')
-    test_ds = FluidToFluid(4, 'test', 'u')
+    train_ds = FluidToFluid(8, 'train', 'u')
+    val_ds = FluidToFluid(8, 'valid', 'u')
+    test_ds = FluidToFluid(8, 'test', 'u')
 
     return train_ds, val_ds, test_ds
 
