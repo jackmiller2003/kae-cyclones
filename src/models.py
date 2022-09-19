@@ -132,9 +132,9 @@ class dynamics_back(nn.Module):
         return x
 
 class koopmanAE(nn.Module):
-    def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False):
+    def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False, steps=4):
         super(koopmanAE, self).__init__()
-        self.steps = 4
+        self.steps = steps
         self.steps_back = 4
         self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
         self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)

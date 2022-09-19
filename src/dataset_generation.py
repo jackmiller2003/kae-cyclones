@@ -14,21 +14,24 @@ def simple_pendulum_deriv(x, t, m, g, l, F, c, omega):
     return nx
 
 def generate_dissipative_sets_for_pendulum(c_array):
-    t_span = np.linspace(0,20,200)
+    t_span = np.linspace(0,50,750)
     sols = []
-    for c in tqdm(c_array):
+    positions = np.linspace(-math.pi,math.pi,100)
+    np.random.shuffle(positions)
+    vels = np.linspace(-2,2,100)
+    np.random.shuffle(vels)
+    for start_pos in tqdm(positions):
         part_c = []
-        for start_pos in np.linspace(-math.pi,math.pi,500):
-            for start_vel in np.linspace(-2,2,100):
-                sol = odeint(simple_pendulum_deriv, y0=[start_pos,start_vel], t=t_span, args=(1,9.8,1,1,0.6+c,1))
-                part_c.append(sol)
+        for start_vel in vels:
+            sol = odeint(simple_pendulum_deriv, y0=[start_pos,start_vel], t=t_span, args=(1,9.8,1,0.6,0,1))
+            part_c.append(sol)
         
         sols.append(part_c)
     
     sols_array = np.array(sols)
-    noise_array = sols_array + np.random.standard_normal(sols_array.shape) * 0.1
-    np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative-{args.c_domain}-{args.c_points}', sols_array)
-    np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative-noise-{args.c_domain}-{args.c_points}', noise_array)
+    # noise_array = sols_array
+    np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum-{args.c_domain}-{args.c_points}', sols_array)
+    # np.save(f'/g/data/x77/jm0124/synthetic_datasets/pendulum-noise-{args.c_domain}-{args.c_points}', noise_array)
     
     return sols_array
 

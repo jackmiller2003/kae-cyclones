@@ -146,108 +146,25 @@ def train(model, train_loader, ds_length, koopman=True, eigen_penal=False, devic
 def eval_models(model,  train_loader, ds_length, koopman=True, device=0, num_epochs=1, steps=4, lamb=1, nu=1, eta=1e-2, batch_size=16, backward=1):
     criterion = nn.MSELoss().to(device)
     model.eval()
-    avg_loss = 0
 
-    fwd_loss = []
-    back_loss = []
-    iden_loss = []
-    cons_loss = []
-    losses = []
-
-    for epoch in range(num_epochs):
-        avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss = 0, 0, 0, 0, 0      
-        for i, cyclone_array_list in tqdm(enumerate(train_loader), total=ds_length/batch_size):
-            loss, cfwd, cbwd, ciden, ccons = 0, 0, 0, 0, 0                    
-            if i == 0:
-                model.print_hidden = True
-            if i != 0:
-                model.print_hidden = False
-
-            # print(f"Length of cyclone array list: {len(cyclone_array_list)}")
-
-            for data in cyclone_array_list:
-                # print(f"Length of data {len(data)}")
-                cyclone_array = data[0].float() 
-                reversed_array = data[1].float()
-                cyclone_array = cyclone_array.to(device)
-                reversed_array = reversed_array.to(device)
-
-                out, out_back = model(x=cyclone_array[0].unsqueeze(0), mode='forward')
-
-                for k in range(steps-1):
-                    if k == 0:
-                        loss_fwd = criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
-                    else:
-                        loss_fwd += criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
-
-                cfwd += loss_fwd
-
-                loss_identity = criterion(out[-1], cyclone_array[0].unsqueeze(0).to(device)) * steps
-                
-                if koopman:
-                    loss_bwd = 0.0
-                    loss_consist = 0.0
-
-                    loss_bwd = 0.0
-                    loss_consist = 0.0
-
-                    if backward == 1:
-                        out, out_back = model(x=cyclone_array[-1].unsqueeze(0), mode='backward')
-
-                        for k in range(steps-1):
-                            
-                            if k == 0:
-                                loss_bwd = criterion(out_back[k], reversed_array[k+1].unsqueeze(0).to(device))
-                            else:
-                                loss_bwd += criterion(out_back[k], reversed_array[k+1].unsqueeze(0).to(device))
-                                
-                                    
-                        A = model.dynamics.dynamics.weight
-                        B = model.backdynamics.dynamics.weight
-
-                        K = A.shape[-1]
-
-                        for k in range(1,K+1):
-                            As1 = A[:,:k]
-                            Bs1 = B[:k,:]
-                            As2 = A[:k,:]
-                            Bs2 = B[:,:k]
-
-                            Ik = torch.eye(k).float().to(device)
-
-                            if k == 1:
-                                loss_consist = (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                                torch.sum((torch.mm(As2, Bs2) - Ik)**2) ) / (2.0*k)
-                            else:
-                                loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                                torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)
-
-                    loss += loss_fwd + lamb * loss_identity +  nu * loss_bwd + eta * loss_consist
-                    ciden += lamb * loss_identity
-                    cbwd += nu * loss_bwd
-                    ccons += eta * loss_consist
-                
-                else:
-                    #loss += loss_identity 
-                    loss += loss_fwd
-
-            avg_fwd_loss += cfwd.item()
-            if koopman:
-                avg_iden_loss += ciden.item()
-                avg_bwd_loss += cbwd.item()
-                avg_cons_loss += ccons.item()
-            else:
-                avg_iden_loss, avg_bwd_loss, avg_cons_loss = 0, 0, 0
+    avg_fwd_loss = 0
+    for i, cyclone_array_list in enumerate(train_loader):
+        loss, cfwd, cbwd, ciden, ccons = 0, 0, 0, 0, 0                    
+        for data in cyclone_array_list:
+            cyclone_array = data[0].float() 
+            cyclone_array = cyclone_array.to(device)
             
-            avg_loss += loss.item()
+            out, out_back = model(x=cyclone_array[0].unsqueeze(0), mode='forward')
 
-        fwd_loss.append(avg_fwd_loss/(ds_length))
-        back_loss.append(avg_bwd_loss/(ds_length))
-        iden_loss.append(avg_iden_loss/(ds_length))
-        cons_loss.append(avg_cons_loss/(ds_length))
-        losses.append(avg_loss / (ds_length))
+            loss_fwd = 0
+            for k in range(model.steps-1):
+                loss_fwd += criterion(out[k], cyclone_array[k+1].unsqueeze(0).to(device))
 
-        return fwd_loss, back_loss, iden_loss, cons_loss
+            cfwd += loss_fwd
+
+        avg_fwd_loss += cfwd.item()            
+
+    return avg_fwd_loss/(ds_length)
 
 def eval_ae_kae(model_kae, model_ae, val_ds, ds_length):
     print(f"KAE: {eval(model_kae, val_ds, ds_length)}")

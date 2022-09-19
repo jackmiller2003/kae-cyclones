@@ -1,8 +1,6 @@
 {
-    "unit_circle_mae":{
-        "gaussianElement":["1e0"]
-    },
     "unit_circle_mse":{
+<<<<<<< HEAD
         "gaussianElement":["1e0"]
     },
     "none":{
@@ -10,5 +8,8 @@
         "gaussianEigen": ["1e0"],
         "uniformEigen": ["1e0"],
         "unitPerturb": ["1e0"]
+=======
+        "unitPerturb":["1e0"]
+>>>>>>> d149fb00d80a64ecce696ec60debdc378bebe94c
     }
 }
