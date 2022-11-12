@@ -244,9 +244,9 @@ def run_prediction_errors():
     
 if __name__ == "__main__":
     l = [
-            ('ocean', 'penaltyNewOcean')
+            #('ocean', 'penaltyNewOcean')
             # ('fluid', 'fluidNew3')
-            #('cyclone-limited', 'spikeAndSlabCyclone')
+            #('cyclone-limited', 'allInitCyclone')
             #('ocean', 'ocean_final'),
             #('fluid', 'fluid_final')  
             # ('pendulum0', 'pendulum0_overnight_noise_run_100')
@@ -255,7 +255,7 @@ if __name__ == "__main__":
             # ('pendulum0-200', 'trying_new_200'),
             #('duffing-100', 'duffingTrying'),
             # ('fp-100', 'duffingTrying3')
-            #('pendulum0-100', 'spikeAndSlabPend')
+            ('pendulum0-100', 'allInitPendulum')
             # ('pendulum0-30', 'trying_new_30_2')
         ]
     
@@ -267,11 +267,11 @@ if __name__ == "__main__":
         # else:
             # expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeOvernight.json')
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeInit.json')
-            epochs = 50
+            epochs = 75
         else:
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeInit.json')
-            epochs = 25
+            epochs = 100
         print(expCol.runRegime)
-        expCol.run(epochs=epochs, numRuns=2)
+        expCol.run(epochs=epochs, numRuns=3)
         print(expCol.collectionResults)
         expCol.saveResults()
