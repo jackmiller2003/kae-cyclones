@@ -23,7 +23,7 @@ class ExperimentCollection:
                 for std in stds:
                     runDicts = []
                     for run in tqdm(range(0, numRuns)):
-                        experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName)
+                        experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName, otherModel=eigenLoss)
                         loss_dict, model, test_steps, test_loader = experiment.run(epochs = epochs, batchSize = batchSize, return_model=True)
                         runDicts.append(loss_dict)
                         if run == 0: min_loss, min_model = np.min(loss_dict['fwd_val']), model
@@ -33,7 +33,7 @@ class ExperimentCollection:
                                 min_loss = np.min(loss_dict['fwd_val'])
                     
                     
-                    accuracy, test_std = test_accuracy(model, 0, test_loader, test_steps)
+                    accuracy, test_std = test_accuracy(min_model, 0, test_loader, test_steps)
                     
                     torch.save(min_model.state_dict(), f'/g/data/x77/jm0124/models/koopman/iclr_paper_models_22/{self.datasetName}-{eigenLoss}-{eigenInit}-{round(min_loss*1e2,2)}')
                     
@@ -88,21 +88,30 @@ class ExperimentCollection:
 
 
 class Experiment:
-    def __init__(self, eigenLoss:str, eigenInit:str, std, datasetName, **kwargs):
+    def __init__(self, eigenLoss:str, eigenInit:str, std, datasetName, otherModel, **kwargs):
         self.eigenLoss = eigenLoss
         self.eigenInit = eigenInit
         self.std = std
         self.datasetName = datasetName
         self.epochs = 50
+        self.otherModel = otherModel
     
     def run(self, epochs=50, batchSize=128, return_model=False):
         train_ds, val_ds, test_ds, train_loader, val_loader, test_loader, test_steps, input_size, alpha, beta, lr, eigenlossHyper = create_dataset(self.datasetName, batchSize)
         init_scheme = InitScheme(self.eigenInit, self.std, beta)
         print(f"Length: {int(len(train_ds[0][0]))}")
+        back = False
 
-        model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])))
+        if self.otherModel == 'AE':
+            model = regularAE(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])))
+        elif self.otherModel == 'FF':
+            model = feedForward(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])))
+        elif self.eigenLoss.endswith('consistent'):
+            back = True
 
-        loss_dict = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs, eigenlossHyper)
+        model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])), back=back)
+
+        loss_dict = train(model, int(0), train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs, eigenlossHyper)
         if return_model: return loss_dict, model, test_steps, test_loader
         return loss_dict
 
@@ -121,6 +130,8 @@ class InitScheme:
 def getInitFunc(distributionName):
     if distributionName == 'gaussianElement':
         return initLibrary.gaussianElement
+    elif distributionName == 'newInit':
+        return initLibrary.newInit
     elif distributionName == 'gaussianEigen':
         return initLibrary.gaussianEigen
     elif distributionName == 'doubleGaussianEigen':
@@ -131,6 +142,12 @@ def getInitFunc(distributionName):
         return initLibrary.svdElement
     elif distributionName == 'unitPerturb':
         return initLibrary.unitPerturb
+    elif distributionName == 'spikeAndSlab':
+        return initLibrary.spikeAndSlab
+    elif distributionName == 'xavierElement':
+        return initLibrary.xavierElement
+    elif distributionName == 'kaimingElement':
+        return initLibrary.kaimingElement
     
 def prediction_errors(model, val_ds, pred_steps=100, starting=0):
     predictions, errors = [val_ds[starting][0][0]], []
@@ -227,11 +244,13 @@ def run_prediction_errors():
     
 if __name__ == "__main__":
     l = [
-            #('ocean', 'trying_new_ocean_4')
-            #('fluid', 'trying_new_fluid_7')
-            ('cyclone-limited', 'trying_new_cyclone_4')
+            ('ocean', 'penaltyNewOcean')
+            # ('fluid', 'fluidNew3')
+            #('cyclone-limited', 'spikeAndSlabCyclone')
             # ('pendulum0-200', 'trying_new_200'),
-            # ('pendulum0-100', 'trying_new_100')
+            #('duffing-100', 'duffingTrying'),
+            # ('fp-100', 'duffingTrying3')
+            #('pendulum0-100', 'spikeAndSlabPend')
             # ('pendulum0-30', 'trying_new_30_2')
         ]
     
@@ -240,11 +259,11 @@ if __name__ == "__main__":
         
         if ds.startswith('pendulum'):      
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeInit.json')
-            epochs = 75
+            epochs = 50
         else:
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeInit.json')
-            epochs = 100
+            epochs = 25
         print(expCol.runRegime)
-        expCol.run(epochs=epochs, numRuns=3)
+        expCol.run(epochs=epochs, numRuns=2)
         print(expCol.collectionResults)
         expCol.saveResults()
