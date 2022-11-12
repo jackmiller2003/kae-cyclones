@@ -3,12 +3,13 @@ from models import *
 from tqdm import tqdm
 from dl_pipeline import *
 import matplotlib.pyplot as plt
-import seaborn
+#import seaborn
 import logging
 import numpy as np
+import time
 import argparse
 import logging
-from wandb import wandb
+#from wandb import wandb
 import json
 import os
 from pathlib import Path
@@ -22,8 +23,8 @@ if direct[10:16] == 'jm0124':
 else:
     saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
 
-def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs, eigenlossAlpha):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
+def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs, eigenlossAlpha, weight_decay=0.01):
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     criterion = nn.MSELoss().to(device)
     model.to(device)
     model.train()
@@ -31,8 +32,13 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     lamb, nu, eta = 1, 1, 1e-2
     alpha = eigenlossAlpha
     loss_dict = {}
+    eigvals, epoch_times = [], []
+    start = time.time()
 
     for epoch in tqdm(range(epochs)):
+    #for epoch in range(epochs):
+        eigvals.append(torch.linalg.eigvals(model.dynamics.dynamics.weight))
+        
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
         
         for i, cyclone_array_list in enumerate(train_loader):
@@ -108,8 +114,10 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             loss_dict['fwd_val'] = [forward_val]
         else:
             loss_dict['fwd_val'].append(forward_val)
+        end = time.time()
+        epoch_times.append(end-start)
     
-    return loss_dict
+    return eigvals, loss_dict, epoch_times
 
 def test_accuracy(model, device, test_loader, step_legnth):
     criterion = nn.MSELoss().to(device)
@@ -143,7 +151,7 @@ def create_model(alpha, beta, init_scheme, input_size):
     return model_dae
 
 def create_dataset(dataset:str, batch_size):
-    print(dataset)
+    #print(dataset)
     "Build a dataset based on the problem type."
     if dataset.startswith('cyclone'):
         if dataset == 'cyclone': train_ds, val_ds, test_ds = generate_example_dataset()
@@ -155,16 +163,11 @@ def create_dataset(dataset:str, batch_size):
         input_size = 400
         alpha = 16
         beta = 16
-<<<<<<< HEAD
-        learning_rate = 1e-3
-        eigenlossHyper = 5e2
-=======
         learning_rate = 5e-4
         eigenlossHyper = 2e2
 
     elif dataset == 'pendulum0-200':
         train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 200)
->>>>>>> d149fb00d80a64ecce696ec60debdc378bebe94c
 
     elif dataset == 'pendulum0':
         train_ds, val_ds, test_ds = generate_pendulum_ds(0)
@@ -267,7 +270,7 @@ def create_dataset(dataset:str, batch_size):
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 150
-        alpha = 16
+        alpha = 32
         beta = 16
         learning_rate = 1e-4
         eigenlossHyper = 2

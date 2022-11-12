@@ -58,17 +58,23 @@ def svdElement(std, matrixSize):
 def unitPerturb(std, matrixSize):
     Omega = gaussianElement(std, matrixSize)      
     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
-
     length = np.random.uniform(1-std*1e-3,1+std*1e-3, w.shape[0])
     angle = np.pi * np.random.uniform(0, 2, w.shape[0])
-
     x = length * np.cos(angle)
     y = length * np.sin(angle)
-
     w.real = x
     w = w + np.zeros(w.shape[0], dtype=complex)
     w.imag = y
-    
+    return torch.from_numpy(reconstruct_operator(w,v).real).float()
+
+def unitPerturb_new(std, matrixSize):
+    Omega = gaussianElement(std, matrixSize)      
+    w, v = np.linalg.eig(Omega.cpu().detach().numpy())
+    x = np.random.uniform(1-(std*1e-1),1+(std*1e-1), w.shape[0]) #length * np.cos(angle)
+    y = np.random.uniform(1-(std*1e-1),1+(std*1e-1), w.shape[0]) #length * np.sin(angle)
+    w.real = x
+    w = w + np.zeros(w.shape[0], dtype=complex)
+    w.imag = y
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
 # def gaussianElement(std, matrixSize):

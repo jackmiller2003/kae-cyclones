@@ -5,9 +5,9 @@ import os
 import numpy as np
 import json
 import matplotlib.pyplot as plt
-import xarray
+#import xarray
 from pathlib import Path
-import dask
+#import dask
 from tqdm import tqdm
 import scipy.io
 
@@ -15,7 +15,7 @@ train_json_path = '/g/data/x77/ob2720/partition/train.json'
 valid_json_path = '/g/data/x77/ob2720/partition/valid.json'
 test_json_path = '/g/data/x77/ob2720/partition/test.json'
 
-dask.config.set(scheduler='synchronous')
+#dask.config.set(scheduler='synchronous')
 
 class CycloneToCycloneDataset(Dataset):
     def __init__(self, cyclone_dir, json_path, prediction_length, atmospheric_values, pressure_levels,
@@ -196,15 +196,9 @@ class OceanToOcean(Dataset):
                 i += 1
                 
 def generate_ocean_ds():
-<<<<<<< HEAD
-    train_ds = OceanToOcean(32, 'train')
-    val_ds = OceanToOcean(32, 'valid')
-    test_ds = OceanToOcean(32, 'test')
-=======
     train_ds = OceanToOcean(30, 'train')
     val_ds = OceanToOcean(30, 'valid')
     test_ds = OceanToOcean(30, 'test')
->>>>>>> d149fb00d80a64ecce696ec60debdc378bebe94c
 
     return train_ds, val_ds, test_ds, 30
 
@@ -215,11 +209,7 @@ class FluidToFluid(Dataset):
         self.prediction_length = prediction_length
 
         if partition_name == 'train':
-<<<<<<< HEAD
-            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 1.0
-=======
             self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.7
->>>>>>> d149fb00d80a64ecce696ec60debdc378bebe94c
     
     def __len__(self):
         return self.fluid_array.shape[0] - self.prediction_length
@@ -234,15 +224,9 @@ class FluidToFluid(Dataset):
             j += 1
 
 def generate_fluid_u():
-<<<<<<< HEAD
-    train_ds = FluidToFluid(8, 'train', 'u')
-    val_ds = FluidToFluid(8, 'valid', 'u')
-    test_ds = FluidToFluid(8, 'test', 'u')
-=======
     train_ds = FluidToFluid(16, 'train', 'u')
     val_ds = FluidToFluid(16, 'valid', 'u')
     test_ds = FluidToFluid(16, 'test', 'u')
->>>>>>> d149fb00d80a64ecce696ec60debdc378bebe94c
 
     return train_ds, val_ds, test_ds, 16
 
