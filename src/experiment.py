@@ -64,7 +64,7 @@ class ExperimentCollection:
                     self.collectionResults[eigenLoss][eigenInit][std] = finalDict
     
     def saveResults(self):
-        with open(f"/home/156/jm0124/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
+        with open(f"/home/156/cn1951/kae-cyclones/results/run_data/{self.name}.json", 'w') as f:
             json.dump(self.collectionResults, f)
 
     def plotResults(self):
@@ -238,8 +238,8 @@ def run_prediction_errors():
                                      [eigen_array, unif_array, unit_array, ge_array])
 
 
-# if __name__ == "__main__":
-#     run_prediction_errors()
+#if __name__ == "__main__":
+    #run_prediction_errors()
 
     
 if __name__ == "__main__":
@@ -247,6 +247,11 @@ if __name__ == "__main__":
             ('ocean', 'penaltyNewOcean')
             # ('fluid', 'fluidNew3')
             #('cyclone-limited', 'spikeAndSlabCyclone')
+            #('ocean', 'ocean_final'),
+            #('fluid', 'fluid_final')  
+            # ('pendulum0', 'pendulum0_overnight_noise_run_100')
+            #('pendulum5', 'pendulum5_overnight_noise_run_100')
+            # ('pendulum9', 'pendulum9_overnight_noise_run_16')
             # ('pendulum0-200', 'trying_new_200'),
             #('duffing-100', 'duffingTrying'),
             # ('fp-100', 'duffingTrying3')
@@ -258,6 +263,9 @@ if __name__ == "__main__":
         expCol = ExperimentCollection(ds, saveName)
         
         if ds.startswith('pendulum'):      
+        #     expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeOvernight.json')
+        # else:
+            # expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeOvernight.json')
             expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeInit.json')
             epochs = 50
         else:
