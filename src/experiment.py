@@ -23,7 +23,7 @@ class ExperimentCollection:
                 for std in stds:
                     runDicts = []
                     for run in tqdm(range(0, numRuns)):
-                        experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName)
+                        experiment = Experiment(eigenLoss, eigenInit, float(std), self.datasetName, otherModel=eigenLoss)
                         loss_dict, model, test_steps, test_loader = experiment.run(epochs = epochs, batchSize = batchSize, return_model=True)
                         runDicts.append(loss_dict)
                         if run == 0: min_loss, min_model = np.min(loss_dict['fwd_val']), model
@@ -33,7 +33,7 @@ class ExperimentCollection:
                                 min_loss = np.min(loss_dict['fwd_val'])
                     
                     
-                    accuracy, test_std = test_accuracy(model, 0, test_loader, test_steps)
+                    accuracy, test_std = test_accuracy(min_model, 0, test_loader, test_steps)
                     
                     torch.save(min_model.state_dict(), f'/g/data/x77/cn1951/models/koopman/iclr_paper_models_22/{self.datasetName}-{eigenLoss}-{eigenInit}-{round(min_loss*1e2,2)}')
                     
@@ -88,21 +88,38 @@ class ExperimentCollection:
 
 
 class Experiment:
-    def __init__(self, eigenLoss:str, eigenInit:str, std, datasetName, **kwargs):
+    def __init__(self, eigenLoss:str, eigenInit:str, std, datasetName, otherModel, **kwargs):
         self.eigenLoss = eigenLoss
         self.eigenInit = eigenInit
         self.std = std
         self.datasetName = datasetName
         self.epochs = 50
+        self.otherModel = otherModel
     
     def run(self, epochs=50, batchSize=128, return_model=False, return_time=False, wd=0.01):
         train_ds, val_ds, test_ds, train_loader, val_loader, test_loader, test_steps, input_size, alpha, beta, lr, eigenlossHyper = create_dataset(self.datasetName, batchSize)
         init_scheme = InitScheme(self.eigenInit, self.std, beta)
+<<<<<<< HEAD
         #print(f"Length: {int(len(train_ds[0][0]))}")
+=======
+        print(f"Length: {int(len(train_ds[0][0]))}")
+        back = False
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
-        model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])))
+        if self.otherModel == 'AE':
+            model = regularAE(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])))
+        elif self.otherModel == 'FF':
+            model = feedForward(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])))
+        elif self.eigenLoss.endswith('consistent'):
+            back = True
 
+<<<<<<< HEAD
         eigvals, loss_dict, epoch_times = train(model, 0, train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs, eigenlossHyper, weight_decay=wd)
+=======
+        model = koopmanAE(init_scheme, beta, alpha, input_size, spectral_norm=False, steps=int(len(train_ds[0][0])), back=back)
+
+        loss_dict = train(model, int(0), train_loader, val_loader, len(train_ds), len(val_ds), lr, self.eigenLoss, epochs, eigenlossHyper)
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
         if return_model: return loss_dict, model, test_steps, test_loader
         if return_time: return loss_dict, epoch_times
         return loss_dict, eigvals
@@ -122,6 +139,8 @@ class InitScheme:
 def getInitFunc(distributionName):
     if distributionName == 'gaussianElement':
         return initLibrary.gaussianElement
+    elif distributionName == 'newInit':
+        return initLibrary.newInit
     elif distributionName == 'gaussianEigen':
         return initLibrary.gaussianEigen
     elif distributionName == 'doubleGaussianEigen':
@@ -132,7 +151,16 @@ def getInitFunc(distributionName):
         return initLibrary.svdElement
     elif distributionName == 'unitPerturb':
         return initLibrary.unitPerturb
+<<<<<<< HEAD
     elif distributionName == 'unitPerturb_new': return initLibrary.unitPerturb_new
+=======
+    elif distributionName == 'spikeAndSlab':
+        return initLibrary.spikeAndSlab
+    elif distributionName == 'xavierElement':
+        return initLibrary.xavierElement
+    elif distributionName == 'kaimingElement':
+        return initLibrary.kaimingElement
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
     
 def prediction_errors(model, val_ds, pred_steps=100, starting=0):
     predictions, errors = [val_ds[starting][0][0]], []
@@ -250,6 +278,7 @@ if __name__ == "__main__":
     plt.savefig("weight_decay.pdf", transparent=True, bbox_inches='tight', pad_inches=0, dpi=300) 
     
 
+<<<<<<< HEAD
 """
 if __name__ == "__main__":
     # GAUSSIAN ELEMENT
@@ -264,6 +293,11 @@ if __name__ == "__main__":
     # UNIT PERTURB
     unit_exp = Experiment("none", "gaussianElement", 1.0, "ocean")
     unit_loss, unit_time = unit_exp.run(epochs=20, return_time=True)
+=======
+#if __name__ == "__main__":
+    #run_prediction_errors()
+
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
     
     colors = ['black', '#003DFD', '#b512b8', '#11a9ba', '#0d780f', '#f77f07']
     plt.plot(ge_time, ge_loss["fwd_val"], label="No penalty", color=colors[0])
@@ -280,11 +314,24 @@ if __name__ == "__main__":
 """    
 if __name__ == "__main__":
     l = [
+<<<<<<< HEAD
             ('ocean', 'trying_new_ocean_4')
             #('fluid', 'trying_new_fluid_7')
             #('cyclone-limited', 'trying_new_cyclone_4')
+=======
+            #('ocean', 'penaltyNewOcean')
+            # ('fluid', 'fluidNew3')
+            #('cyclone-limited', 'allInitCyclone')
+            #('ocean', 'ocean_final'),
+            #('fluid', 'fluid_final')  
+            # ('pendulum0', 'pendulum0_overnight_noise_run_100')
+            #('pendulum5', 'pendulum5_overnight_noise_run_100')
+            # ('pendulum9', 'pendulum9_overnight_noise_run_16')
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
             # ('pendulum0-200', 'trying_new_200'),
-            # ('pendulum0-100', 'trying_new_100')
+            #('duffing-100', 'duffingTrying'),
+            # ('fp-100', 'duffingTrying3')
+            ('pendulum0-100', 'allInitPendulum')
             # ('pendulum0-30', 'trying_new_30_2')
         ]
     
@@ -292,7 +339,14 @@ if __name__ == "__main__":
         expCol = ExperimentCollection(ds, saveName)
         
         if ds.startswith('pendulum'):      
+<<<<<<< HEAD
             expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeInit.json')
+=======
+        #     expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeOvernight.json')
+        # else:
+            # expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeOvernight.json')
+            expCol.loadRunRegime('/home/156/jm0124/kae-cyclones/src/testingRegimeInit.json')
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
             epochs = 75
         else:
             expCol.loadRunRegime('/home/156/cn1951/kae-cyclones/src/testingRegimeInit.json')

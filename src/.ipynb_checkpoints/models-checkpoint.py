@@ -3,7 +3,11 @@ import torch
 import torch.nn.functional as F
 from initLibrary import *
 from experiment import *
+<<<<<<< HEAD
 from eunn import EUNN
+=======
+# from eunn import EUNN
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 import torch.nn.utils.parametrizations as tparam
 
 def gaussian_init_(n_units, std=1):    
@@ -110,11 +114,15 @@ class decoderNetSimple(nn.Module):
 class dynamics(nn.Module):
     def __init__(self, b, init_scheme, spectral_norm=False):
         super(dynamics, self).__init__()
+<<<<<<< HEAD
         if spectral_norm:
             self.dynamics = tparam.spectral_norm(nn.Linear(b, b, bias=False))
         else:
             self.dynamics = nn.Linear(b, b, bias=False)
         
+=======
+        self.dynamics = nn.Linear(b, b, bias=False)
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
         self.dynamics.weight.data = init_scheme()
 
     def forward(self, x):
@@ -122,22 +130,92 @@ class dynamics(nn.Module):
         return x
 
 class dynamics_back(nn.Module):
+<<<<<<< HEAD
     def __init__(self, b, omega):
         super(dynamics_back, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
         self.dynamics.weight.data = torch.pinverse(omega.dynamics.weight.data.t())
+=======
+    def __init__(self, b, init_scheme):
+        super(dynamics_back, self).__init__()
+        self.dynamics = nn.Linear(b, b, bias=False)
+        self.dynamics.weight.data = init_scheme()
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
     def forward(self, x):
         x = self.dynamics(x)
         return x
 
 class koopmanAE(nn.Module):
+<<<<<<< HEAD
     def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False, steps=4):
         super(koopmanAE, self).__init__()
         self.steps = steps
         self.steps_back = 4
         self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
         self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size, spectral_norm=spectral_norm)
+=======
+    def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False, steps=4, back=False):
+        super(koopmanAE, self).__init__()
+        self.steps = steps
+        self.approx_steps = 4
+        self.steps_back = steps
+        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.back = back
+        self.dynamics = dynamics(b, init_scheme, False)
+        self.backdynamics = dynamics_back(b, init_scheme)
+
+
+    def forward(self, x, mode='forward'):
+        out = []
+        out_back = []
+        z = self.encoder(x.contiguous())
+        q = z.contiguous()
+        
+        if mode == 'forward':
+            for _ in range(self.steps):
+                q = self.dynamics(q)
+                out.append(self.decoder(q))
+
+            out.append(self.decoder(z.contiguous())) 
+            return out, out_back    
+
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                q = self.backdynamics(q)
+                #print(q)
+                out_back.append(self.decoder(q))
+            
+            out_back.append(self.decoder(z.contiguous()))
+            return out, out_back
+        
+        if mode =='forward-approx':
+            stepList = np.linspace(0,self.steps, 4, dtype=int)
+            q = torch.squeeze(q)
+            for step in stepList:
+                powermatrix = torch.linalg.matrix_power(self.dynamics.dynamics.weight, step)
+                out.append(self.decoder(torch.linalg.multi_dot([powermatrix, q])))
+            
+            out.append(self.decoder(z.contiguous())) 
+            return out, out_back
+        
+        if mode =='backward-approx':
+            q = torch.squeeze(q)
+            stepList = np.linspace(0,self.steps, 4, dtype=int)
+            for step in stepList:
+                powermatrix = torch.linalg.matrix_power(self.backdynamics.dynamics.weight, step)
+                out_back.append(self.decoder(torch.linalg.multi_dot([powermatrix, q])))
+            
+            out_back.append(self.decoder(z.contiguous()))
+            return out, out_back
+
+class koopmanAE2(nn.Module):
+    def __init__(self, b, steps, steps_back, alpha = 4, init_scale=10, simple=True, norm=True, print_hidden=False, maxmin=2, eigen_init=True, eigen_distribution='uniform', input_size=400, std=1):
+        super(koopmanAE, self).__init__()
+        self.steps = steps
+        self.steps_back = steps_back
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
         self.dynamics = dynamics(b, init_scheme, spectral_norm=spectral_norm)
         self.backdynamics = dynamics_back(b, self.dynamics)
@@ -166,6 +244,7 @@ class koopmanAE(nn.Module):
             out_back.append(self.decoder(z.contiguous()))
             return out, out_back
 
+<<<<<<< HEAD
 class regularAE(nn.Module):
     def __init__(self, b, steps, steps_back, alpha = 4, init_scale=1, simple=True, norm=True, print_hidden=False):
         super(regularAE, self).__init__()
@@ -182,6 +261,37 @@ class regularAE(nn.Module):
             self.decoder = decoderNet(alpha = alpha, b=b)
 
         self.print_hidden = print_hidden
+=======
+class nonlinearDynamics(nn.Module):
+    def __init__(self, b, init_scheme, spectral_norm=False):
+        super(nonlinearDynamics, self).__init__()
+        self.dynamics = nn.Linear(b, b)
+        print(self.dynamics.weight)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.dynamics(x))
+        return x
+
+class nonlinearDynamicsBack(nn.Module):
+    def __init__(self, b, omega):
+        super(nonlinearDynamicsBack, self).__init__()
+        self.dynamics = nn.Linear(b, b)
+        print(self.dynamics.weight)
+        #self.dynamics.weight.data = torch.pinverse(omega.dynamics.weight.data.t())
+
+    def forward(self, x):
+        x = F.leaky_relu(self.dynamics(x))
+        return x
+        
+class regularAE(nn.Module):
+    def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False, steps=4):
+        super(regularAE, self).__init__()
+        self.steps = steps
+        self.steps_back = 4
+        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.dynamics = nonlinearDynamics(b, init_scheme, False)
+        self.backdynamics = nonlinearDynamicsBack(b, self.dynamics)
 
 
     def forward(self, x, mode='forward'):
@@ -190,6 +300,42 @@ class regularAE(nn.Module):
         z = self.encoder(x.contiguous())
         q = z.contiguous()
 
+        
+        if mode == 'forward':
+            for _ in range(self.steps):
+                q = self.dynamics(q)
+                out.append(self.decoder(q))
+
+            out.append(self.decoder(z.contiguous())) 
+            return out, out_back    
+
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                q = self.backdynamics(q)
+                out_back.append(self.decoder(q))
+                
+            out_back.append(self.decoder(z.contiguous()))
+            return out, out_back
+
+class feedForward(nn.Module):
+    def __init__(self, init_scheme, b, alpha = 4, input_size=400, spectral_norm=False, steps=4):
+        super(feedForward, self).__init__()
+        self.steps = steps
+        self.steps_back = 4
+        self.encoder = encoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.decoder = decoderNetSimple(alpha = alpha, b=b, input_size=input_size)
+        self.dynamics = nonlinearDynamics(alpha*16, init_scheme, False)
+        self.backdynamics = nonlinearDynamicsBack(b, self.dynamics)
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
+
+
+    def forward(self, x, mode='forward'):
+        out = []
+        out_back = []
+        z = self.encoder(x.contiguous())
+        q = z.contiguous()
+
+<<<<<<< HEAD
         if self.print_hidden:
             print(z)
 
@@ -200,6 +346,22 @@ class regularAE(nn.Module):
                 out.append(q)
 
             out.append(self.decoder(z.contiguous())) 
+=======
+        
+        if mode == 'forward':
+            for _ in range(self.steps):
+                q = self.decoder(self.encoder(q))
+                out.append(q)
+
+            return out, out_back    
+
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                q = self.backdynamics(q)
+                out_back.append(self.decoder(q))
+                
+            out_back.append(self.decoder(z.contiguous()))
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
             return out, out_back
 
 class predictionANN(nn.Module):

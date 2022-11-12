@@ -35,6 +35,23 @@ def generate_dissipative_sets_for_pendulum(c_array):
     
     return sols_array
 
+def fixed_point(x, mu, lam): 
+    # The simple pendulum subject to zero damping and zero control input 
+    nx = np.zeros(2)
+    x1, x2 = x[0], x[1]
+    nx[0] = mu * x1
+    nx[1] = lam * (x2 - x1**2)
+    return nx
+
+def unforced_duffing(x, delta, beta,alpha): 
+    # The simple pendulum subject to zero damping and zero control input 
+    nx = np.zeros(2)
+    x1, x2 = x[0], x[1]
+    nx[0] = x2
+    nx[1] = - delta * x2 - x1 * (beta + alpha * x1**2)
+    return nx
+
+
 if __name__ == '__main__':
         # TRAINING ARGUMENTS
     parser = argparse.ArgumentParser(description='Autoencoder Prediction')

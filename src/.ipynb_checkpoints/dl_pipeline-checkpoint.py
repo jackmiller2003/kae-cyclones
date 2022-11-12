@@ -2,12 +2,20 @@ from datasets import *
 from models import *
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+<<<<<<< HEAD
 #import seaborn
+=======
+import seaborn
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 import logging
 
 # logging.basicConfig(level=logging.DEBUG, filename='log.txt')
 # logging.debug('This will get logged')
+<<<<<<< HEAD
 saved_models_path = '/home/156/cn0124/kae-cyclones/saved_models'
+=======
+saved_models_path = '/home/156/jm0124/kae-cyclones/saved_models'
+>>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
 
 

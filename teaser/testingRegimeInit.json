@@ -1,0 +1,14 @@
+{
+    "none":{
+        "gaussianElement":["1e0"],
+        "uniformEigen":["1e0"]
+    },
+    "unit_circle_mse":{
+        "gaussianElement":["1e0"],
+        "uniformEigen":["1e0"]
+    },
+    "origin_mse":{
+        "gaussianElement":["1e0"],
+        "uniformEigen":["1e0"]
+    }
+}

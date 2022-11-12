@@ -1,0 +1,11 @@
+{
+    "none":{
+        "newInit":["1e0"]
+    },
+    "unit_circle_mse":{
+        "newInit":["1e0"]
+    },
+    "none-consistent":{
+        "newInit":["1e0"]
+    }
+}
