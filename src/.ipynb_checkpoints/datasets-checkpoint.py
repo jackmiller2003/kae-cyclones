@@ -232,7 +232,8 @@ def generate_fluid_u():
 
 class PendulumToPendulum(Dataset):
     def __init__(self, prediction_length, dissipation_level, partition_name='train'):
-        self.pendulum_array = np.load(f"/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative_{partition_name}_long.npy")
+        self.pendulum_array = np.load(f"/g/data/x77/jm0124/synthetic_datasets/pendulum_dissipative_{partition_name}_sub.npy")
+        print(self.pendulum_array.shape)
         self.dissipation_level = dissipation_level
         self.prediction_length = prediction_length
     
@@ -249,10 +250,62 @@ class PendulumToPendulum(Dataset):
                 j += 1
                 i += 1
 
-def generate_pendulum_ds(dissipation_level, prediction_horizon=96):
+class fpTofp(Dataset):
+    def __init__(self, prediction_length, partition_name='train'):
+        self.array = 100*np.load(f"/g/data/x77/jm0124/synthetic_datasets/fp_attractor_{partition_name}_small.npy")
+        self.prediction_length = prediction_length
+    
+    def __len__(self):
+        return len(self.array)
+    
+    def __getitem__(self, idx):
+        i = 0
+        for fpRun in self.array:
+            j = self.prediction_length
+            for time_step in fpRun[self.prediction_length:-self.prediction_length]:
+                if i == idx:
+                    return torch.from_numpy(50*fpRun[j-self.prediction_length:j+self.prediction_length]), torch.from_numpy(np.flip(50*fpRun[j-self.prediction_length:j+self.prediction_length], 0).copy())
+                j += 1
+                i += 1
+
+class duffingToDuffing(Dataset):
+    def __init__(self, prediction_length, partition_name='train'):
+        self.array = 100*np.load(f"/g/data/x77/jm0124/synthetic_datasets/sols_duffing_{partition_name}.npy")
+        self.prediction_length = prediction_length
+    
+    def __len__(self):
+        return len(self.array)
+    
+    def __getitem__(self, idx):
+        i = 0
+        for fpRun in self.array:
+            j = self.prediction_length
+            for time_step in fpRun[self.prediction_length:-self.prediction_length]:
+                if i == idx:
+                    return torch.from_numpy(fpRun[j-self.prediction_length:j+self.prediction_length]), torch.from_numpy(np.flip(fpRun[j-self.prediction_length:j+self.prediction_length], 0).copy())
+                j += 1
+                i += 1
+
+
+
+def generate_pendulum_ds(dissipation_level, prediction_horizon=25):
     train_ds = PendulumToPendulum(prediction_horizon, dissipation_level, 'train')
     val_ds = PendulumToPendulum(prediction_horizon, dissipation_level, 'valid')
     test_ds = PendulumToPendulum(prediction_horizon, dissipation_level, 'test')
+
+    return train_ds, val_ds, test_ds, prediction_horizon
+
+def generate_fpTofp_ds(prediction_horizon=100):
+    train_ds = fpTofp(prediction_horizon, 'train')
+    val_ds = fpTofp(prediction_horizon, 'val')
+    test_ds = fpTofp(prediction_horizon, 'test')
+
+    return train_ds, val_ds, test_ds, prediction_horizon
+
+def generate_duffingToduffing_ds(prediction_horizon=100):
+    train_ds = fpTofp(prediction_horizon, 'train')
+    val_ds = fpTofp(prediction_horizon, 'val')
+    test_ds = fpTofp(prediction_horizon, 'test')
 
     return train_ds, val_ds, test_ds, prediction_horizon
 
@@ -280,14 +333,14 @@ def generate_example_dataset():
                 load_np=True, save_np=False, partition_name='train', crop=True
     """
 
-    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 24,
+    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 16,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='train')
-    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 24,
+    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 16,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='valid')
-    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 24,
+    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 16,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='test')
 
-    return train_ds, val_ds, test_ds
+    return train_ds, val_ds, test_ds, 16
 
 def generate_prediction_dataset():
     train_ds = CycloneDataset('/g/data/x77/ob2720/partition/train/', tracks_path=train_json_path, 

@@ -24,13 +24,8 @@ if direct[10:16] == 'jm0124':
 else:
     saved_models_path = '/home/156/cn1951/kae-cyclones/saved_models'
 
-<<<<<<< HEAD
 def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs, eigenlossAlpha, weight_decay=0.01):
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-=======
-def train(model, device, train_loader, val_loader, train_size, val_size, learning_rate, eigenLoss, epochs, eigenlossAlpha, approx=False):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
     criterion = nn.MSELoss().to(device)
     model.to(device)
     model.train()
@@ -44,6 +39,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
     for epoch in tqdm(range(epochs)):
     #for epoch in range(epochs):
         eigvals.append(torch.linalg.eigvals(model.dynamics.dynamics.weight))
+        approx = False
         
         avg_loss, avg_fwd_loss, avg_bwd_loss, avg_iden_loss, avg_cons_loss, avg_eigen_loss = 0, 0, 0, 0, 0, 0
         
@@ -146,7 +142,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
             avg_cons_loss += ccons
             avg_eigen_loss += ceigen
         
-        now = str(datetime.datetime.now())
+        now = time.time()
 
         if type(avg_bwd_loss) == int:
             if loss_dict == {}:
@@ -156,7 +152,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 loss_dict['bwd'] = [avg_bwd_loss/train_size]
                 loss_dict['cons'] = [avg_cons_loss/train_size]
                 loss_dict['eigen'] = [avg_eigen_loss.cpu().item()/train_size]
-                loss_dict['time'] = [now]
+                loss_dict['time'] = [now-start]
             else:
                 loss_dict['loss'].append(avg_loss.cpu().item()/train_size)
                 loss_dict['iden'].append(0)
@@ -164,7 +160,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 loss_dict['bwd'].append(avg_bwd_loss/train_size)
                 loss_dict['cons'].append(avg_cons_loss/train_size)
                 loss_dict['eigen'].append(avg_eigen_loss.cpu().item()/train_size)
-                loss_dict['time'].append(now)
+                loss_dict['time'].append(now-start)
         else:
             if loss_dict == {}:
                 loss_dict['loss'] = [avg_loss.cpu().item()/train_size]
@@ -173,7 +169,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 loss_dict['bwd'] = [avg_bwd_loss.cpu().item()/train_size]
                 loss_dict['cons'] = [avg_cons_loss.cpu().item()/train_size]
                 loss_dict['eigen'] = [avg_eigen_loss.cpu().item()/train_size]
-                loss_dict['time'] = [now]
+                loss_dict['time'] = [now-start]
             else:
                 loss_dict['loss'].append(avg_loss.cpu().item()/train_size)
                 loss_dict['iden'].append(0)
@@ -181,7 +177,7 @@ def train(model, device, train_loader, val_loader, train_size, val_size, learnin
                 loss_dict['bwd'].append(avg_bwd_loss.cpu().item()/train_size)
                 loss_dict['cons'].append(avg_cons_loss.cpu().item()/train_size)
                 loss_dict['eigen'].append(avg_eigen_loss.cpu().item()/train_size)
-                loss_dict['time'].append(now)
+                loss_dict['time'].append(now-start)
 
         w = torch.linalg.eigvals(model.dynamics.dynamics.weight)
             
@@ -229,7 +225,7 @@ def create_dataset(dataset:str, batch_size):
     #print(dataset)
     "Build a dataset based on the problem type."
     if dataset.startswith('cyclone'):
-        if dataset == 'cyclone': train_ds, val_ds, test_ds = generate_example_dataset()
+        if dataset == 'cyclone': train_ds, val_ds, test_ds, test_steps = generate_example_dataset()
         elif dataset == 'cyclone-limited':
             train_ds, val_ds, test_ds, test_steps = generate_limited_cyclones()
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
@@ -237,7 +233,6 @@ def create_dataset(dataset:str, batch_size):
         test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 400
         alpha = 16
-<<<<<<< HEAD
         beta = 16
         learning_rate = 5e-4
         eigenlossHyper = 2e2
@@ -245,11 +240,6 @@ def create_dataset(dataset:str, batch_size):
     elif dataset == 'pendulum0-200':
         train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 200)
 
-=======
-        beta = 8
-        learning_rate = 1e-3
-        eigenlossHyper = 4e3
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
     elif dataset == 'pendulum0':
         train_ds, val_ds, test_ds = generate_pendulum_ds(0)
         loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
@@ -267,10 +257,10 @@ def create_dataset(dataset:str, batch_size):
         val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
         input_size = 2
-        alpha = 4
+        alpha = 8
         beta = 16
         learning_rate = 1e-4
-        eigenlossHyper = 1e2
+        eigenlossHyper = 1e3
     
     elif dataset == 'pendulum0-64':
         train_ds, val_ds, test_ds, test_steps = generate_pendulum_ds(0, 64)
@@ -379,6 +369,160 @@ def create_dataset(dataset:str, batch_size):
         beta = 16
         learning_rate = 1e-4
         eigenlossHyper = 2
+    
+    elif dataset == 'oceanVeryNarrow':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+
+    elif dataset == 'oceanNarrow':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 8
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+
+    elif dataset == 'oceanWide':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 64
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+    
+    elif dataset == 'oceanVeryWide':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 128
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+
+    elif dataset == 'oceanKOSS':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 2
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+
+    elif dataset == 'oceanKOS':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 4
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+    
+    elif dataset == 'oceanKOM':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+    
+    elif dataset == 'oceanKOL':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 64
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+    
+    elif dataset == 'oceanKOLL':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 128
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+
+    elif dataset == 'oceanLarge':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 20
+    
+    elif dataset == 'oceanVeryLarge':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 20
+    
+    elif dataset == 'oceanMedium':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2
+    
+    elif dataset == 'oceanSmall':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2e-1
+    
+    elif dataset == 'oceanVerySmall':
+        train_ds, val_ds, test_ds, test_steps  = generate_ocean_ds()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 150
+        alpha = 32
+        beta = 16
+        learning_rate = 1e-4
+        eigenlossHyper = 2e-2
         
     elif dataset == 'fluid':
         train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
@@ -389,6 +533,160 @@ def create_dataset(dataset:str, batch_size):
         alpha = 16
         beta = 16
         learning_rate = 1e-3
-        eigenlossHyper = 10
+        eigenlossHyper = 20e0
+    
+    elif dataset == 'fluidNarrow':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 8
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 20e0
+    
+    elif dataset == 'fluidVeryNarrow':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 4
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 20e0
+    
+    elif dataset == 'fluidWide':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 64
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 20e0
+    
+    elif dataset == 'fluidVeryWide':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 128
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 20e0
+
+    elif dataset == 'fluidVeryLarge':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 2e2
+    
+    elif dataset == 'fluidLarge':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 2e1
+    
+    elif dataset == 'fluidMedium':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 2e0
+    
+    elif dataset == 'fluidSmall':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 2e-1
+    
+    elif dataset == 'fluidVerySmall':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 2e-2
+    
+    elif dataset == 'fluidKOSS':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 2
+        learning_rate = 1e-3
+        eigenlossHyper = 40e0/beta
+
+    elif dataset == 'fluidKOS':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 4
+        learning_rate = 1e-3
+        eigenlossHyper = 40e0/beta
+
+    elif dataset == 'fluidKO':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 16
+        learning_rate = 1e-3
+        eigenlossHyper = 40e0/beta
+    
+    elif dataset == 'fluidKOL':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 64
+        learning_rate = 1e-3
+        eigenlossHyper = 40e0/beta
+    
+    elif dataset == 'fluidKOLL':
+        train_ds, val_ds, test_ds, test_steps = generate_fluid_u()
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_ds, batch_size=batch_size, num_workers=8, pin_memory=True, shuffle=True)
+        input_size = 89351
+        alpha = 16
+        beta = 128
+        learning_rate = 1e-3
+        eigenlossHyper = 40e0/beta
 
     return train_ds, val_ds, test_ds, loader, val_loader, test_loader, test_steps, input_size, alpha, beta, learning_rate, eigenlossHyper

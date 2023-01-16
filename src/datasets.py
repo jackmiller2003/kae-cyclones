@@ -196,15 +196,9 @@ class OceanToOcean(Dataset):
                 i += 1
                 
 def generate_ocean_ds():
-<<<<<<< HEAD
     train_ds = OceanToOcean(30, 'train')
     val_ds = OceanToOcean(30, 'valid')
     test_ds = OceanToOcean(30, 'test')
-=======
-    train_ds = OceanToOcean(32, 'train')
-    val_ds = OceanToOcean(32, 'valid')
-    test_ds = OceanToOcean(32, 'test')
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
     return train_ds, val_ds, test_ds, 30
 
@@ -215,11 +209,7 @@ class FluidToFluid(Dataset):
         self.prediction_length = prediction_length
 
         if partition_name == 'train':
-<<<<<<< HEAD
             self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 0.7
-=======
-            self.fluid_array += np.random.standard_normal(self.fluid_array.shape) * 1.0
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
     
     def __len__(self):
         return self.fluid_array.shape[0] - self.prediction_length
@@ -234,15 +224,9 @@ class FluidToFluid(Dataset):
             j += 1
 
 def generate_fluid_u():
-<<<<<<< HEAD
     train_ds = FluidToFluid(16, 'train', 'u')
     val_ds = FluidToFluid(16, 'valid', 'u')
     test_ds = FluidToFluid(16, 'test', 'u')
-=======
-    train_ds = FluidToFluid(8, 'train', 'u')
-    val_ds = FluidToFluid(8, 'valid', 'u')
-    test_ds = FluidToFluid(8, 'test', 'u')
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
     return train_ds, val_ds, test_ds, 16
 
@@ -349,14 +333,14 @@ def generate_example_dataset():
                 load_np=True, save_np=False, partition_name='train', crop=True
     """
 
-    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 24,
+    train_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/train/', train_json_path, 16,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='train')
-    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 24,
+    val_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/valid/', valid_json_path, 16,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='valid')
-    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 24,
+    test_ds = CycloneToCycloneDataset('/g/data/x77/ob2720/partition/test/', test_json_path, 16,
                                         ['u'], [2], load_np=True, save_np=False, partition_name='test')
 
-    return train_ds, val_ds, test_ds
+    return train_ds, val_ds, test_ds, 16
 
 def generate_prediction_dataset():
     train_ds = CycloneDataset('/g/data/x77/ob2720/partition/train/', tracks_path=train_json_path, 

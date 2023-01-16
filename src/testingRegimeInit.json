@@ -1,18 +1,22 @@
 {
     "unit_circle_mse-none":{
+        "gaussianElement":["1e0"],
         "uniformEigen":["1e0"],
         "spikeAndSlab":["1e-1"]
     },
     "unit_circle_mse-consistent":{
+        "gaussianElement":["1e0"],
         "uniformEigen":["1e0"],
         "spikeAndSlab":["1e-1"]
     },
     "none":{
+        "gaussianElement":["1e0"],
         "xavierElement":["1e0"],
         "uniformEigen":["1e0"],
         "spikeAndSlab":["1e-1"]
     },
     "none-consistent":{
+        "gaussianElement":["1e0"],
         "uniformEigen":["1e0"],
         "spikeAndSlab":["1e-1"]
     }

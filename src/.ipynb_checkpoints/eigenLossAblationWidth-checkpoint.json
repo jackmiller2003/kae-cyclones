@@ -1,0 +1,8 @@
+{
+    "none":{
+        "gaussianElement":["1e0"]
+    },
+    "unit_circle_mse-none":{
+        "gaussianElement":["1e0"]
+    }
+}

@@ -50,8 +50,134 @@ def uniformEigen(std, matrixSize):
     print(new_U)
     return torch.from_numpy(new_U.real).float()
 
+# def spikeAndSlab(std, matrixSize):
+#     alpha = 0.7
+#     elements = [0,1]
+#     probabilities = [alpha, 1-alpha]
+#     new_ps = []
+#     c = np.random.choice(elements, matrixSize, p=probabilities)
+#     for ch in c:
+#         if ch == 1:
+#             r = np.random.uniform(1-std, 1, size=1)[0]
+#             print(f"r = {r}")
+#             new_ps.append(r)
+#         else:
+#             new_ps.append(1)
+#     new_p = np.array(new_ps)
+#     U = create_U((matrixSize,matrixSize))
+#     new_U = change_eigvalues(U, new_p)
+#     print(f"Imag: {np.average(new_U.imag)}")
+#     print(f"Real: {np.average(np.abs(new_U.real))}")
+#     print(new_U)
+#     return torch.from_numpy(new_U.real).float()
+
 def spikeAndSlab(std, matrixSize):
     alpha = 0.7
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabSmall(std, matrixSize):
+    alpha = 0.2
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabVerySmall(std, matrixSize):
+    alpha = 0
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabMedium(std, matrixSize):
+    alpha = 0.5
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabLarge(std, matrixSize):
+    alpha = 0.8
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabVeryLarge(std, matrixSize):
+    alpha = 0.95
     elements = [0,1]
     probabilities = [alpha, 1-alpha]
     new_ps = []
@@ -91,7 +217,7 @@ def gaussianElement(std, matrixSize):
 
 def xavierElement(std, matrixSize):
     print(f"Xavier bounds: {np.sqrt(6/(matrixSize+matrixSize))}")
-    sampler = torch.distributions.Uniform(torch.Tensor([-np.sqrt(6/(matrixSize+matrixSize))]), torch.Tensor([np.sqrt(6/(matrixSize+matrixSize))]))
+    sampler = torch.distributions.Uniform(torch.Tensor([-np.sqrt(2/(matrixSize+matrixSize))]), torch.Tensor([np.sqrt(2/(matrixSize+matrixSize))]))
     Omega = sampler.sample((matrixSize, matrixSize))[..., 0]
     return Omega
 

@@ -1,0 +1,6 @@
+{
+    "none":{
+        "gaussianElement":["1e0"],
+        "uniformEigen":["1e0"]
+    }
+}

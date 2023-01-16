@@ -11,8 +11,6 @@ def reconstruct_operator(w, v):
     # reconstruct the original matrix
     B = v.dot(L).dot(R)
     return B
-<<<<<<< HEAD
-=======
 import numpy as np
 
 def create_U(size):
@@ -52,8 +50,134 @@ def uniformEigen(std, matrixSize):
     print(new_U)
     return torch.from_numpy(new_U.real).float()
 
+# def spikeAndSlab(std, matrixSize):
+#     alpha = 0.7
+#     elements = [0,1]
+#     probabilities = [alpha, 1-alpha]
+#     new_ps = []
+#     c = np.random.choice(elements, matrixSize, p=probabilities)
+#     for ch in c:
+#         if ch == 1:
+#             r = np.random.uniform(1-std, 1, size=1)[0]
+#             print(f"r = {r}")
+#             new_ps.append(r)
+#         else:
+#             new_ps.append(1)
+#     new_p = np.array(new_ps)
+#     U = create_U((matrixSize,matrixSize))
+#     new_U = change_eigvalues(U, new_p)
+#     print(f"Imag: {np.average(new_U.imag)}")
+#     print(f"Real: {np.average(np.abs(new_U.real))}")
+#     print(new_U)
+#     return torch.from_numpy(new_U.real).float()
+
 def spikeAndSlab(std, matrixSize):
-    alpha = 0.3
+    alpha = 0.4
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabSmall(std, matrixSize):
+    alpha = 0.2
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabVerySmall(std, matrixSize):
+    alpha = 0
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabMedium(std, matrixSize):
+    alpha = 0.5
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabLarge(std, matrixSize):
+    alpha = 0.8
+    elements = [0,1]
+    probabilities = [alpha, 1-alpha]
+    new_ps = []
+    c = np.random.choice(elements, matrixSize, p=probabilities)
+    for ch in c:
+        if ch == 1:
+            r = np.random.uniform(1-std, 1, size=1)[0]
+            print(f"r = {r}")
+            new_ps.append(r)
+        else:
+            new_ps.append(1)
+    new_p = np.array(new_ps)
+    U = create_U((matrixSize,matrixSize))
+    new_U = change_eigvalues(U, new_p)
+    print(f"Imag: {np.average(new_U.imag)}")
+    print(f"Real: {np.average(np.abs(new_U.real))}")
+    print(new_U)
+    return torch.from_numpy(new_U.real).float()
+
+def spikeAndSlabVeryLarge(std, matrixSize):
+    alpha = 1
     elements = [0,1]
     probabilities = [alpha, 1-alpha]
     new_ps = []
@@ -84,10 +208,16 @@ def spikeAndSlab(std, matrixSize):
 #     U = create_U(matrixSize, matrixSize)
 #     new_U = change_eigvalues(U, new_p)
 #     return new_U
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 
 def gaussianElement(std, matrixSize):
+    print(f"Gaussian std: {std/matrixSize}")
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/matrixSize]))
+    Omega = sampler.sample((matrixSize, matrixSize))[..., 0]
+    return Omega
+
+def xavierElement(std, matrixSize):
+    print(f"Xavier bounds: {np.sqrt(6/(matrixSize+matrixSize))}")
+    sampler = torch.distributions.Uniform(torch.Tensor([-np.sqrt(2/(matrixSize+matrixSize))]), torch.Tensor([np.sqrt(2/(matrixSize+matrixSize))]))
     Omega = sampler.sample((matrixSize, matrixSize))[..., 0]
     return Omega
 
@@ -122,14 +252,6 @@ def uniformEigen(std, matrixSize):
     
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
-<<<<<<< HEAD
-def svdElement(std, matrixSize):
-    Omega = gaussianElement(std, matrixSize)      
-    U, _, V = torch.svd(Omega)
-    Omega = torch.mm(U, V.t())
-    
-    return Omega
-
 def unitPerturb(std, matrixSize):
     Omega = gaussianElement(std, matrixSize)      
     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
@@ -152,23 +274,6 @@ def unitPerturb_new(std, matrixSize):
     w.imag = y
     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
-=======
-def unitPerturb(std, matrixSize):
-    Omega = gaussianElement(std, matrixSize)      
-    w, v = np.linalg.eig(Omega.cpu().detach().numpy())
-
-    length = np.random.uniform(1-std*1e-3,1+std*1e-3, w.shape[0])
-    angle = np.pi * np.random.uniform(0, 2, w.shape[0])
-
-    x = length * np.cos(angle)
-    y = length * np.sin(angle)
-
-    w.real = x
-    w = w + np.zeros(w.shape[0], dtype=complex)
-    w.imag = y
-    
-    return torch.from_numpy(reconstruct_operator(w,v).real).float()
-
 # def unitPerturb(std, matrixSize):
 #     Omega = gaussianElement(std, matrixSize)      
 #     w, v = np.linalg.eig(Omega.cpu().detach().numpy())
@@ -179,7 +284,6 @@ def unitPerturb(std, matrixSize):
 #     w.imag = y
 #     return torch.from_numpy(reconstruct_operator(w,v).real).float()
 
->>>>>>> aacfec355fb921a8bbae364b3b637eb5f411ac3a
 # def gaussianElement(std, matrixSize):
 #     gaussianMatrix = gaussianElement(std, matrixSize)
 #     w, v = np.linalg.eig(Omega.cpu().detach().numpy())

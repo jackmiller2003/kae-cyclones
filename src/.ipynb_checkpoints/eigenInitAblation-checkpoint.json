@@ -1,0 +1,9 @@
+{
+    "none":{
+        "spikeAndSlabVerySmall":["1e0"],
+        "spikeAndSlabSmall":["1e0"],
+        "spikeAndSlabMedium":["1e0"],
+        "spikeAndSlabLarge":["1e0"],
+        "spikeAndSlabVeryLarge":["1e0"]
+    }
+}
